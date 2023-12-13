@@ -4,12 +4,12 @@
 
 ChatGPT-Style Web UI Client for Ollama 🦙
 
-![Ollama Web UI Demo](./demo.gif)
+![Ollama Web UI Demo](https://github.com/ollama-webui/ollama-webui/blob/main/demo.gif?raw=true)
 
 ## TL;DR
 
 ```sh
-helm repo add ollama-webui https://braveokafor.github.io/ollama-webui/
+helm repo add ollama-webui https://braveokafor.github.io/ollama-webui-helm/
 helm install ollama ollama-webui/ollama-webui
 ```
 
