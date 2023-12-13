@@ -1,0 +1,67 @@
+name: Release Charts
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - "charts/**"
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "$GITHUB_ACTOR"
+          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
+      - name: Set up Helm
+        uses: azure/setup-helm@v3
+        with:
+          version: v3.6.3
+
+      - name: Add chart dependencies
+        run: |
+          find . -name "Chart.yaml" -print0 | while IFS= read -r -d '' chart; do
+            if grep -q "dependencies:" "$chart"; then
+              dependencies=$(yq e '.dependencies[] | .repository + " " + .name' "$chart")
+              while read -r repo name; do
+                if ! helm repo list | grep -q "$repo"; then
+                  helm repo add "$name" "$repo"
+                fi
+              done <<< "$dependencies"
+              chart_dir=$(dirname "$chart")
+              (cd "$chart_dir" && helm dependency build)
+            fi
+          done
+  
+      - name: Build chart dependencies
+        run: |
+          for dir in charts/*/
+          do
+              (cd ${dir}; helm dependency build)
+          done
+
+      - name: Run chart-releaser
+        uses: helm/chart-releaser-action@v1.5.0
+        with:
+          version: v1.6.0
+        env:
+          CR_SKIP_EXISTING: true
+          CR_GENERATE_RELEASE_NOTES: true
+          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          CR_RELEASE_NAME_TEMPLATE: "{{ .Version }}-helm"
