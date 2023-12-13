@@ -2,7 +2,7 @@ annotations:
   licenses: MIT
 apiVersion: v2
 appVersion: 0.1.13
-version: 0.1.0
+version: 0.1.1
 name: ollama-webui
 description: "ChatGPT-Style Web UI Client for Ollama 🦙"
 home: https://github.com/braveokafor/ollama-webui-helm/
