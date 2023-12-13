@@ -1,0 +1,73 @@
+CHART NAME: {{ .Chart.Name  }}
+CHART VERSION: {{ .Chart.Version  }}
+APP VERSION: {{ .Chart.AppVersion  }}
+
+** Please be patient while the chart is being deployed **
+
+{{- if .Values.diagnosticMode.enabled }}
+The chart has been deployed in diagnostic mode. All probes have been disabled and the command has been overwritten with:
+
+  command: {{- include "common.tplvalues.render" (dict "value" .Values.diagnosticMode.command "context" $) | nindent 4 }}
+  args: {{- include "common.tplvalues.render" (dict "value" .Values.diagnosticMode.args "context" $) | nindent 4 }}
+
+Get the list of pods by executing:
+
+  kubectl get pods --namespace {{ include "common.names.namespace" . | quote }} -l app.kubernetes.io/instance={{ .Release.Name }}
+
+Access the pod you want to debug by executing
+
+  kubectl exec --namespace {{ include "common.names.namespace" . | quote }} -ti <NAME OF THE POD> -- bash
+
+{{- else }}
+
+
+Your Ollama WebUI instance can be accessed through the following DNS name from within your cluster:
+
+    {{ include "common.names.fullname" . }}-webui.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }} (port {{ .Values.webui.service.ports.http }})
+
+To access your Ollama WebUI instance from outside the cluster follow the steps below:
+
+{{- if .Values.ingress.enabled }}
+
+1. Get the Ollama WebUI URL and associated Hostname to your cluster external IP:
+
+   export CLUSTER_IP=$(minikube ip) # On Minikube. Use: `kubectl cluster-info` on others K8s clusters
+   echo "Ollama WebUI URL: http{{ if .Values.ingress.tls }}s{{ end }}://{{ .Values.ingress.hostname }}/"
+   echo "$CLUSTER_IP  {{ .Values.ingress.hostname }}" | sudo tee -a /etc/hosts
+
+{{- else }}
+{{- $port := .Values.webui.service.ports.http | toString }}
+
+1. Get the Ollama WebUI URL by running these commands:
+
+{{- if contains "NodePort" .Values.webui.service.type }}
+
+   export NODE_PORT=$(kubectl get --namespace {{ .Release.Namespace }} -o jsonpath="{.spec.ports[0].nodePort}" services {{ include "common.names.fullname" . }}-webui)
+   export NODE_IP=$(kubectl get nodes --namespace {{ .Release.Namespace }} -o jsonpath="{.items[0].status.addresses[0].address}")
+   echo "Ollama WebUI URL: http://$NODE_IP:$NODE_PORT/"
+
+{{- else if contains "LoadBalancer" .Values.webui.service.type }}
+
+  NOTE: It may take a few minutes for the LoadBalancer IP to be available.
+        Watch the status with: 'kubectl get svc --namespace {{ .Release.Namespace }} -w {{ include "common.names.fullname" . }}-webui'
+
+   export SERVICE_IP=$(kubectl get svc --namespace {{ .Release.Namespace }} {{ include "common.names.fullname" . }}-webui --template "{{ "{{ range (index .status.loadBalancer.ingress 0) }}{{ . }}{{ end }}" }}")
+   echo "Ollama WebUI URL: http://$SERVICE_IP{{- if ne $port "80" }}:{{ .Values.webui.service.ports.http }}{{ end }}/"
+
+{{- else if contains "ClusterIP"  .Values.webui.service.type }}
+
+   kubectl port-forward --namespace {{ .Release.Namespace }} svc/{{ include "common.names.fullname" . }}-webui {{ .Values.webui.service.ports.http }}:{{ .Values.webui.service.ports.http }} &
+   echo "Ollama WebUI URL: http://127.0.0.1{{- if ne $port "80" }}:{{ .Values.webui.service.ports.http }}{{ end }}//"
+
+{{- end }}
+{{- end }}
+
+2. Open a browser and access Ollama WebUI using the obtained URL.
+
+3. If you enabled MongoDB (for Web Authentication), create a new account.
+
+To learn more about the Ollama WebUI:
+- Visit the GitHub repo [ https://github.com/ollama-webui/ollama-webui ].
+- Join the Discord community [ https://discord.gg/5rJgQTnV4s ].
+
+{{- end }}

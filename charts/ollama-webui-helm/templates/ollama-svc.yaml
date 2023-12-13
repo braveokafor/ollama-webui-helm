@@ -1,0 +1,52 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "common.names.fullname" . }}-ollama
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if or .Values.ollama.service.annotations .Values.commonAnnotations }}
+  annotations:
+    {{- if .Values.ollama.service.annotations }}
+    {{- include "common.tplvalues.render" (dict "value" .Values.ollama.service.annotations "context" $) | nindent 4 }}
+    {{- end }}
+    {{- if .Values.commonAnnotations }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- end }}
+spec:
+  type: {{ .Values.ollama.service.type }}
+  {{- if and .Values.ollama.service.clusterIP (eq .Values.ollama.service.type "ClusterIP") }}
+  clusterIP: {{ .Values.ollama.service.clusterIP }}
+  {{- end }}
+  {{- if or (eq .Values.ollama.service.type "LoadBalancer") (eq .Values.ollama.service.type "NodePort") }}
+  externalTrafficPolicy: {{ .Values.ollama.service.externalTrafficPolicy | quote }}
+  {{- end }}
+  {{- if and (eq .Values.ollama.service.type "LoadBalancer") (not (empty .Values.ollama.service.loadBalancerSourceRanges)) }}
+  loadBalancerSourceRanges: {{ .Values.ollama.service.loadBalancerSourceRanges }}
+  {{- end }}
+  {{- if and (eq .Values.ollama.service.type "LoadBalancer") (not (empty .Values.ollama.service.loadBalancerIP)) }}
+  loadBalancerIP: {{ .Values.ollama.service.loadBalancerIP }}
+  {{- end }}
+  {{- if .Values.ollama.service.sessionAffinity }}
+  sessionAffinity: {{ .Values.ollama.service.sessionAffinity }}
+  {{- end }}
+  {{- if .Values.ollama.service.sessionAffinityConfig }}
+  sessionAffinityConfig: {{- include "common.tplvalues.render" (dict "value" .Values.ollama.service.sessionAffinityConfig "context" $) | nindent 4 }}
+  {{- end }}
+  ports:
+    - name: http
+      port: {{ .Values.ollama.service.ports.http }}
+      protocol: TCP
+      targetPort: http
+      {{- if (and (or (eq .Values.ollama.service.type "NodePort") (eq .Values.ollama.service.type "LoadBalancer")) (not (empty .Values.ollama.service.nodePorts.http))) }}
+      nodePort: {{ .Values.ollama.service.nodePorts.http }}
+      {{- else if eq .Values.ollama.service.type "ClusterIP" }}
+      nodePort: null
+      {{- end }}
+    {{- if .Values.ollama.service.extraPorts }}
+    {{- include "common.tplvalues.render" (dict "value" .Values.ollama.service.extraPorts "context" $) | nindent 4 }}
+    {{- end }}
+  selector: {{- include "ollama.selectorLabels" . | nindent 4 }}

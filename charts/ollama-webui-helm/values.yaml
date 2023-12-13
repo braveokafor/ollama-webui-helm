@@ -1,0 +1,1128 @@
+## @section Global parameters
+## Global Docker image parameters
+## Please, note that this will override the image parameters, including dependencies, configured to use the global value
+## Current available global Docker image parameters: imageRegistry, imagePullSecrets and storageClass
+##
+
+## @param global.imageRegistry Global Docker image registry
+## @param global.imagePullSecrets Global Docker registry secret names as an array
+## @param global.storageClass Global StorageClass for Persistent Volume(s)
+##
+global:
+  imageRegistry: ""
+  ## E.g.
+  ## imagePullSecrets:
+  ##   - myRegistryKeySecretName
+  ##
+  imagePullSecrets: []
+  storageClass: ""
+
+## @section Common parameters
+##
+
+## @param kubeVersion Override Kubernetes version
+##
+kubeVersion: ""
+
+## @param nameOverride String to partially override common.names.name
+##
+nameOverride: ""
+## @param fullnameOverride String to fully override common.names.fullname
+##
+fullnameOverride: ""
+## @param namespaceOverride String to fully override common.names.namespace
+##
+namespaceOverride: ""
+## @param commonLabels Labels to add to all deployed objects
+##
+commonLabels: {}
+## @param commonAnnotations Annotations to add to all deployed objects
+##
+commonAnnotations: {}
+## @param clusterDomain Kubernetes cluster domain name
+##
+clusterDomain: cluster.local
+## @param extraDeploy Array of extra objects to deploy with the release
+##
+extraDeploy: []
+
+## Enable diagnostic mode in deployments
+##
+diagnosticMode:
+  ## @param diagnosticMode.enabled Enable diagnostic mode (all probes will be disabled and the command will be overridden)
+  ##
+  enabled: false
+  ## @param diagnosticMode.command Command to override all containers in the deployment
+  ##
+  command:
+    - sleep
+  ## @param diagnosticMode.args Args to override all containers in the deployment
+  ##
+  args:
+    - infinity
+
+## Ollama
+##
+ollama:
+  ## @section Ollama Environment parameters
+  ##
+
+  ## @param ollama.gpu.enabled Enable GPU on ollama containers
+  ## @param ollama.gpu.num Number of GPU units to reserve on ollama containers (resources.limits)
+  gpu:
+    enabled: true
+    num: 1
+
+  ## @section Ollama Image parameters
+  ##
+
+  ## Ollama image
+  ## ref: https://hub.docker.com/r/ollama/ollama/tags/
+  ## @param ollama.image.registry [default: docker.io] ollama image registry
+  ## @param ollama.image.repository [default: ollama/ollama] ollama image repository
+  ## @skip ollama.image.tag ollama image tag (immutable tags are recommended)
+  ## @param ollama.image.digest ollama image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag image tag (immutable tags are recommended)
+  ## @param ollama.image.pullPolicy ollama image pull policy
+  ## @param ollama.image.pullSecrets ollama image pull secrets
+  ## @param ollama.image.debug Enable ollama image debug mode
+  ##
+  image:
+    registry: docker.io
+    repository: ollama/ollama
+    tag: latest
+    digest: ""
+    ## Specify an imagePullPolicy
+    ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+    ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+    ##
+    pullPolicy: IfNotPresent
+    ## Optionally specify an array of imagePullSecrets.
+    ## Secrets must be manually created in the namespace.
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+    ## e.g:
+    ## pullSecrets:
+    ##   - myRegistryKeySecretName
+    ##
+    pullSecrets: []
+    ## Enable debug mode
+    ##
+    debug: false
+
+  ## @section Ollama Deployment parameters
+  ##
+
+  ## @param ollama.replicaCount Number of ollama replicas to deploy
+  ## NOTE: ReadWriteMany PVC(s) are required if replicaCount > 1
+  ##
+  replicaCount: 1
+  ## @param ollama.containerPorts.http ollama HTTP container port
+  ##
+  containerPorts:
+    http: 11434
+  ## Configure extra options for ollama containers' liveness and readiness probes
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+  ## @param ollama.livenessProbe.enabled Enable livenessProbe on ollama containers
+  ## @skip ollama.livenessProbe.httpGet
+  ## @param ollama.livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
+  ## @param ollama.livenessProbe.periodSeconds Period seconds for livenessProbe
+  ## @param ollama.livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
+  ## @param ollama.livenessProbe.failureThreshold Failure threshold for livenessProbe
+  ## @param ollama.livenessProbe.successThreshold Success threshold for livenessProbe
+  ##
+  livenessProbe:
+    enabled: true
+    httpGet:
+      path: /
+      port: http
+      ## If using an HTTPS-terminating load-balancer, the probes may need to behave
+      ## like the balancer to prevent HTTP 302 responses. According to the Kubernetes
+      ## docs, 302 should be considered "successful", but this issue on GitHub
+      ## (https://github.com/kubernetes/kubernetes/issues/47893) shows that it isn't.
+      ## E.g.
+      ## httpHeaders:
+      ## - name: X-Forwarded-Proto
+      ##   value: https
+      ##
+      httpHeaders:
+        - name: Host
+          value: localhost
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param ollama.readinessProbe.enabled Enable readinessProbe on ollama containers
+  ## @skip ollama.readinessProbe.httpGet
+  ## @param ollama.readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+  ## @param ollama.readinessProbe.periodSeconds Period seconds for readinessProbe
+  ## @param ollama.readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+  ## @param ollama.readinessProbe.failureThreshold Failure threshold for readinessProbe
+  ## @param ollama.readinessProbe.successThreshold Success threshold for readinessProbe
+  ##
+  readinessProbe:
+    enabled: true
+    httpGet:
+      path: /
+      port: http
+      ## If using an HTTPS-terminating load-balancer, the probes may need to behave
+      ## like the balancer to prevent HTTP 302 responses. According to the Kubernetes
+      ## docs, 302 should be considered "successful", but this issue on GitHub
+      ## (https://github.com/kubernetes/kubernetes/issues/47893) shows that it isn't.
+      ## E.g.
+      ## httpHeaders:
+      ## - name: X-Forwarded-Proto
+      ##   value: https
+      ##
+      httpHeaders:
+        - name: Host
+          value: localhost
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param ollama.startupProbe.enabled Enable startupProbe on ollama containers
+  ## @skip ollama.startupProbe.httpGet
+  ## @param ollama.startupProbe.initialDelaySeconds Initial delay seconds for startupProbe
+  ## @param ollama.startupProbe.periodSeconds Period seconds for startupProbe
+  ## @param ollama.startupProbe.timeoutSeconds Timeout seconds for startupProbe
+  ## @param ollama.startupProbe.failureThreshold Failure threshold for startupProbe
+  ## @param ollama.startupProbe.successThreshold Success threshold for startupProbe
+  ##
+  startupProbe:
+    enabled: true
+    httpGet:
+      path: /
+      port: http
+      ## If using an HTTPS-terminating load-balancer, the probes may need to behave
+      ## like the balancer to prevent HTTP 302 responses. According to the Kubernetes
+      ## docs, 302 should be considered "successful", but this issue on GitHub
+      ## (https://github.com/kubernetes/kubernetes/issues/47893) shows that it isn't.
+      ## E.g.
+      ## httpHeaders:
+      ## - name: X-Forwarded-Proto
+      ##   value: https
+      ##
+      httpHeaders:
+        - name: Host
+          value: localhost
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param ollama.customLivenessProbe Custom livenessProbe that overrides the default one
+  ##
+  customLivenessProbe: {}
+  ## @param ollama.customReadinessProbe Custom readinessProbe that overrides the default one
+  ##
+  customReadinessProbe: {}
+  ## @param ollama.customStartupProbe Custom startupProbe that overrides the default one
+  ##
+  customStartupProbe: {}
+  ## ollama resource requests and limits
+  ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  ## @param ollama.resources.requests.cpu The requested cpu for the ollama containers
+  ## @param ollama.resources.requests.memory The requested memory for the ollama containers
+  ## @param ollama.resources.limits.memory The memory limit for the ollama containers
+  ## @param ollama.resources.limits.cpu The cpu limit for the ollama containers
+  ##
+  resources:
+    requests:
+      memory: 4096Mi
+      cpu: 2000m
+    limits:
+      memory: 8192Mi
+      cpu: 4000m
+  ## Configure Pods Security Context
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
+  ## @param ollama.podSecurityContext.enabled Enabled Kimai pods' Security Context
+  ## @param ollama.podSecurityContext.fsGroup Set Kimai pod's Security Context fsGroup
+  ## @param ollama.podSecurityContext.seccompProfile.type Set Kimai container's Security Context seccomp profile
+  ##
+  podSecurityContext:
+    enabled: false
+    fsGroup: 1001
+    seccompProfile:
+      type: "RuntimeDefault"
+  ## Configure Container Security Context (only main container)
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
+  ## @param ollama.containerSecurityContext.enabled Enabled Kimai containers' Security Context
+  ## @param ollama.containerSecurityContext.runAsUser Set Kimai container's Security Context runAsUser
+  ## @param ollama.containerSecurityContext.runAsNonRoot Set Kimai container's Security Context runAsNonRoot
+  ## @param ollama.containerSecurityContext.allowPrivilegeEscalation Set Kimai container's privilege escalation
+  ## @param ollama.containerSecurityContext.capabilities.drop Set Kimai container's Security Context runAsNonRoot
+  ##
+  containerSecurityContext:
+    enabled: false
+    runAsUser: 1001
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: ["ALL"]
+  ## OTHER PARAMETERS RELATED TO OLLAMA CONTAINER/POD
+
+  ## @param ollama.existingConfigmap The name of an existing ConfigMap with your custom configuration for ollama
+  ##
+  existingConfigmap:
+  ## @param ollama.command Override default container command (useful when using custom images)
+  ##
+  command: []
+  ## @param ollama.args Override default container args (useful when using custom images)
+  ##
+  args: []
+  ## @param ollama.hostAliases ollama pods host aliases
+  ## https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/
+  ##
+  hostAliases: []
+  ## @param ollama.deploymentAnnotations Annotations for ollama deployment
+  ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+  ##
+  deploymentAnnotations: {}
+  ## @param ollama.podLabels Extra labels for ollama pods
+  ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+  ##
+  podLabels: {}
+  ## @param ollama.podAnnotations Annotations for ollama pods
+  ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+  ##
+  podAnnotations: {}
+  ## @param ollama.podAffinityPreset Pod affinity preset. Ignored if `ollama.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAffinityPreset: ""
+  ## @param ollama.podAntiAffinityPreset Pod anti-affinity preset. Ignored if `ollama.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAntiAffinityPreset: soft
+  ## Pod Disruption Budget configuration
+  ## ref: https://kubernetes.io/docs/tasks/run-application/configure-pdb
+  ## @param ollama.pdb.create Enable/disable a Pod Disruption Budget creation
+  ## @param ollama.pdb.minAvailable Minimum number/percentage of pods that should remain scheduled
+  ## @param ollama.pdb.maxUnavailable Maximum number/percentage of pods that may be made unavailable
+  ##
+  pdb:
+    create: true
+    minAvailable: 1
+    maxUnavailable: ""
+  ## Autoscaling configuration
+  ## ref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/
+  ## @param ollama.autoscaling.enabled Enable autoscaling for ollama
+  ## @param ollama.autoscaling.minReplicas Minimum number of ollama replicas
+  ## @param ollama.autoscaling.maxReplicas Maximum number of ollama replicas
+  ## @param ollama.autoscaling.targetCPU Target CPU utilization percentage
+  ## @param ollama.autoscaling.targetMemory Target Memory utilization percentage
+  ##
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 11
+    targetCPU: 80
+    targetMemory: 80
+  ## Node ollama.affinity preset
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
+  ##
+  nodeAffinityPreset:
+    ## @param ollama.nodeAffinityPreset.type Node affinity preset type. Ignored if `ollama.affinity` is set. Allowed values: `soft` or `hard`
+    ##
+    type: ""
+    ## @param ollama.nodeAffinityPreset.key Node label key to match. Ignored if `ollama.affinity` is set
+    ##
+    key: ""
+    ## @param ollama.nodeAffinityPreset.values Node label values to match. Ignored if `ollama.affinity` is set
+    ## E.g.
+    ## values:
+    ##   - e2e-az1
+    ##   - e2e-az2
+    ##
+    values: []
+  ## @param ollama.affinity Affinity for ollama pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ## NOTE: `ollama.podAffinityPreset`, `ollama.podAntiAffinityPreset`, and `ollama.nodeAffinityPreset` will be ignored when it's set
+  ##
+  affinity: {}
+  ## @param ollama.nodeSelector Node labels for ollama pods assignment
+  ## ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
+  ## @param ollama.tolerations Tolerations for ollama pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  ##
+  tolerations: []
+  ## @param ollama.updateStrategy.type ollama statefulset strategy type
+  ## ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies
+  ##
+  updateStrategy:
+    ## StrategyType
+    ## Can be set to RollingUpdate or OnDelete
+    ##
+    type: RollingUpdate
+  ## @param ollama.priorityClassName ollama pods' priorityClassName
+  ##
+  priorityClassName: ""
+  ## @param ollama.topologySpreadConstraints Topology Spread Constraints for pod assignment spread across your cluster among failure-domains. Evaluated as a template
+  ## Ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/#spread-constraints-for-pods
+  ##
+  topologySpreadConstraints: []
+  ## @param ollama.schedulerName Name of the k8s scheduler (other than default) for ollama pods
+  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+  ##
+  schedulerName: ""
+  ## @param ollama.terminationGracePeriodSeconds Seconds Redmine pod needs to terminate gracefully
+  ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod/#termination-of-pods
+  ##
+  terminationGracePeriodSeconds: ""
+  ## @param ollama.lifecycleHooks for the ollama container(s) to automate configuration before or after startup
+  ##
+  lifecycleHooks: {}
+  ## @param ollama.extraEnvVars Array with extra environment variables to add to ollama nodes
+  ## e.g:
+  ## extraEnvVars:
+  ##   - name: FOO
+  ##     value: "bar"
+  ##
+  extraEnvVars: []
+  ## @param ollama.extraEnvVarsCM Name of existing ConfigMap containing extra env vars for ollama nodes
+  ##
+  extraEnvVarsCM: ""
+  ## @param ollama.extraEnvVarsSecret Name of existing Secret containing extra env vars for ollama nodes
+  ##
+  extraEnvVarsSecret: ""
+  ## @param ollama.extraVolumes Optionally specify extra list of additional volumes for the ollama pod(s)
+  ##
+  extraVolumes: []
+  ## @param ollama.extraVolumeMounts Optionally specify extra list of additional volumeMounts for the ollama container(s)
+  ##
+  extraVolumeMounts: []
+  ## @param ollama.sidecars Add additional sidecar containers to the ollama pod(s)
+  ## e.g:
+  ## sidecars:
+  ##   - name: your-image-name
+  ##     image: your-image
+  ##     imagePullPolicy: Always
+  ##     ports:
+  ##       - name: portname
+  ##         containerPort: 1234
+  ##
+  sidecars: []
+  ## @param ollama.initContainers Add additional init containers to the ollama pod(s)
+  ## ref: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/
+  ## e.g:
+  ## initContainers:
+  ##  - name: your-image-name
+  ##    image: your-image
+  ##    imagePullPolicy: Always
+  ##    command: ['sh', '-c', 'echo "hello world"']
+  ##
+  initContainers: []
+
+  ## @section Ollama Traffic Exposure Parameters
+  ##
+
+  ## Ollama service parameters
+  ##
+  service:
+    ## @param ollama.service.type ollama service type
+    ##
+    type: ClusterIP
+    ## @param ollama.service.ports.http ollama service HTTP port
+    ##
+    ports:
+      http: 11434
+    ## Node ports to expose
+    ## @param ollama.service.nodePorts.http Node port for HTTP
+    ## NOTE: choose port between <30000-32767>
+    ##
+    nodePorts:
+      http: ""
+    ## @param ollama.service.clusterIP ollama service Cluster IP
+    ## e.g.:
+    ## clusterIP: None
+    ##
+    clusterIP: ""
+    ## @param ollama.service.loadBalancerIP ollama service Load Balancer IP
+    ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer
+    ##
+    loadBalancerIP: ""
+    ## @param ollama.service.loadBalancerSourceRanges ollama service Load Balancer sources
+    ## ref: https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
+    ## e.g:
+    ## loadBalancerSourceRanges:
+    ##   - 10.10.10.0/24
+    ##
+    loadBalancerSourceRanges: []
+    ## @param ollama.service.externalTrafficPolicy ollama service external traffic policy
+    ## ref http://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
+    ##
+    externalTrafficPolicy: Cluster
+    ## @param ollama.service.annotations Additional custom annotations for ollama service
+    ##
+    annotations: {}
+    ## @param ollama.service.extraPorts Extra ports to expose in ollama service (normally used with the `sidecars` value)
+    ##
+    extraPorts: []
+    ## @param ollama.service.sessionAffinity Control where client requests go, to the same pod or round-robin
+    ## Values: ClientIP or None
+    ## ref: https://kubernetes.io/docs/user-guide/services/
+    ##
+    sessionAffinity: None
+    ## @param ollama.service.sessionAffinityConfig Additional settings for the sessionAffinity
+    ## sessionAffinityConfig:
+    ##   clientIP:
+    ##     timeoutSeconds: 300
+    ##
+    sessionAffinityConfig: {}
+
+  ## @section Ollama Persistence Parameters
+  ##
+
+  ## Enable persistence for Ollama using Persistent Volume Claims
+  ## ref: https://kubernetes.io/docs/user-guide/persistent-volumes/
+  ##
+  persistence:
+    ## @param ollama.persistence.enabled Enable persistence using Persistent Volume Claims
+    ##
+    enabled: true
+    ## @param ollama.persistence.mountPath Path to mount the volume at.
+    ##
+    mountPath: /root/.ollama
+    ## @param ollama.persistence.subPath The subdirectory of the volume to mount to, useful in dev environments and one PV for multiple services
+    ##
+    subPath: ""
+    ## @param ollama.persistence.storageClass Storage class of backing PVC
+    ## If defined, storageClassName: <storageClass>
+    ## If set to "-", storageClassName: "", which disables dynamic provisioning
+    ## If undefined (the default) or set to null, no storageClassName spec is
+    ##   set, choosing the default provisioner.  (gp2 on AWS, standard on
+    ##   GKE, AWS & OpenStack)
+    ##
+    storageClass: ""
+    ## @param ollama.persistence.annotations Persistent Volume Claim annotations
+    ##
+    annotations: {}
+    ## @param ollama.persistence.accessModes Persistent Volume Access Modes
+    ##
+    accessModes:
+      - ReadWriteOnce
+    ## @param ollama.persistence.size Size of data volume
+    ##
+    size: 30Gi
+    ## @param ollama.persistence.existingClaim The name of an existing PVC to use for persistence
+    ##
+    existingClaim: ""
+    ## @param ollama.persistence.selector Selector to match an existing Persistent Volume for WordPress data PVC
+    ## If set, the PVC can't have a PV dynamically provisioned for it
+    ## E.g.
+    ## selector:
+    ##   matchLabels:
+    ##     app: my-app
+    ##
+    selector: {}
+    ## @param ollama.persistence.dataSource Custom PVC data source
+    ##
+    dataSource: {}
+
+## Webui
+##
+webui:
+  ## @section Webui Environment parameters
+  ##
+
+  ## @param webui.JWTSecretKey JWT Secret Key
+  JWTSecretKey: SECRET_KEY
+
+  ## @section Webui Image parameters
+  ##
+
+  ## Webui image
+  ## ref: https://github.com/ollama-webui/ollama-webui/pkgs/container/ollama-webui/versions
+  ## @param webui.image.registry [default: ghcr.io] webui image registry
+  ## @param webui.image.repository [default: ollama-webui/ollama-webui] webui image repository
+  ## @skip webui.image.tag webui image tag (immutable tags are recommended)
+  ## @param webui.image.digest webui image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag image tag (immutable tags are recommended)
+  ## @param webui.image.pullPolicy webui image pull policy
+  ## @param webui.image.pullSecrets webui image pull secrets
+  ## @param webui.image.debug Enable webui image debug mode
+  ##
+  image:
+    registry: ghcr.io
+    repository: ollama-webui/ollama-webui
+    tag: main
+    digest: ""
+    ## Specify an imagePullPolicy
+    ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
+    ## ref: http://kubernetes.io/docs/user-guide/images/#pre-pulling-images
+    ##
+    pullPolicy: IfNotPresent
+    ## Optionally specify an array of imagePullSecrets.
+    ## Secrets must be manually created in the namespace.
+    ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/
+    ## e.g:
+    ## pullSecrets:
+    ##   - myRegistryKeySecretName
+    ##
+    pullSecrets: []
+    ## Enable debug mode
+    ##
+    debug: false
+
+  ## @section Webui Deployment parameters
+  ##
+
+  ## @param webui.replicaCount Number of webui replicas to deploy
+  ## NOTE: ReadWriteMany PVC(s) are required if replicaCount > 1
+  ##
+  replicaCount: 1
+  ## @param webui.containerPorts.http webui HTTP container port
+  ##
+  containerPorts:
+    http: 8080
+  ## Configure extra options for webui containers' liveness and readiness probes
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes
+  ## @param webui.livenessProbe.enabled Enable livenessProbe on webui containers
+  ## @skip webui.livenessProbe.httpGet
+  ## @param webui.livenessProbe.initialDelaySeconds Initial delay seconds for livenessProbe
+  ## @param webui.livenessProbe.periodSeconds Period seconds for livenessProbe
+  ## @param webui.livenessProbe.timeoutSeconds Timeout seconds for livenessProbe
+  ## @param webui.livenessProbe.failureThreshold Failure threshold for livenessProbe
+  ## @param webui.livenessProbe.successThreshold Success threshold for livenessProbe
+  ##
+  livenessProbe:
+    enabled: true
+    httpGet:
+      path: /
+      port: http
+      ## If using an HTTPS-terminating load-balancer, the probes may need to behave
+      ## like the balancer to prevent HTTP 302 responses. According to the Kubernetes
+      ## docs, 302 should be considered "successful", but this issue on GitHub
+      ## (https://github.com/kubernetes/kubernetes/issues/47893) shows that it isn't.
+      ## E.g.
+      ## httpHeaders:
+      ## - name: X-Forwarded-Proto
+      ##   value: https
+      ##
+      httpHeaders:
+        - name: Host
+          value: localhost
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param webui.readinessProbe.enabled Enable readinessProbe on webui containers
+  ## @skip webui.readinessProbe.httpGet
+  ## @param webui.readinessProbe.initialDelaySeconds Initial delay seconds for readinessProbe
+  ## @param webui.readinessProbe.periodSeconds Period seconds for readinessProbe
+  ## @param webui.readinessProbe.timeoutSeconds Timeout seconds for readinessProbe
+  ## @param webui.readinessProbe.failureThreshold Failure threshold for readinessProbe
+  ## @param webui.readinessProbe.successThreshold Success threshold for readinessProbe
+  ##
+  readinessProbe:
+    enabled: true
+    httpGet:
+      path: /
+      port: http
+      ## If using an HTTPS-terminating load-balancer, the probes may need to behave
+      ## like the balancer to prevent HTTP 302 responses. According to the Kubernetes
+      ## docs, 302 should be considered "successful", but this issue on GitHub
+      ## (https://github.com/kubernetes/kubernetes/issues/47893) shows that it isn't.
+      ## E.g.
+      ## httpHeaders:
+      ## - name: X-Forwarded-Proto
+      ##   value: https
+      ##
+      httpHeaders:
+        - name: Host
+          value: localhost
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param webui.startupProbe.enabled Enable startupProbe on webui containers
+  ## @skip webui.startupProbe.httpGet
+  ## @param webui.startupProbe.initialDelaySeconds Initial delay seconds for startupProbe
+  ## @param webui.startupProbe.periodSeconds Period seconds for startupProbe
+  ## @param webui.startupProbe.timeoutSeconds Timeout seconds for startupProbe
+  ## @param webui.startupProbe.failureThreshold Failure threshold for startupProbe
+  ## @param webui.startupProbe.successThreshold Success threshold for startupProbe
+  ##
+  startupProbe:
+    enabled: true
+    httpGet:
+      path: /
+      port: http
+      ## If using an HTTPS-terminating load-balancer, the probes may need to behave
+      ## like the balancer to prevent HTTP 302 responses. According to the Kubernetes
+      ## docs, 302 should be considered "successful", but this issue on GitHub
+      ## (https://github.com/kubernetes/kubernetes/issues/47893) shows that it isn't.
+      ## E.g.
+      ## httpHeaders:
+      ## - name: X-Forwarded-Proto
+      ##   value: https
+      ##
+      httpHeaders:
+        - name: Host
+          value: localhost
+    initialDelaySeconds: 30
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 6
+    successThreshold: 1
+  ## @param webui.customLivenessProbe Custom livenessProbe that overrides the default one
+  ##
+  customLivenessProbe: {}
+  ## @param webui.customReadinessProbe Custom readinessProbe that overrides the default one
+  ##
+  customReadinessProbe: {}
+  ## @param webui.customStartupProbe Custom startupProbe that overrides the default one
+  ##
+  customStartupProbe: {}
+  ## webui resource requests and limits
+  ## ref: http://kubernetes.io/docs/user-guide/compute-resources/
+  ## @param webui.resources.requests.cpu The requested cpu for the webui containers
+  ## @param webui.resources.requests.memory The requested memory for the webui containers
+  ## @param webui.resources.limits.memory The memory limit for the webui containers
+  ## @param webui.resources.limits.cpu The cpu limit for the webui containers
+  ##
+  resources:
+    requests:
+      memory: 256Mi
+      cpu: 100m
+    limits:
+      memory: 512Mi
+      cpu: 200m
+  ## Configure Pods Security Context
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod
+  ## @param webui.podSecurityContext.enabled Enabled Kimai pods' Security Context
+  ## @param webui.podSecurityContext.fsGroup Set Kimai pod's Security Context fsGroup
+  ## @param webui.podSecurityContext.seccompProfile.type Set Kimai container's Security Context seccomp profile
+  ##
+  podSecurityContext:
+    enabled: false
+    fsGroup: 1001
+    seccompProfile:
+      type: "RuntimeDefault"
+  ## Configure Container Security Context (only main container)
+  ## ref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container
+  ## @param webui.containerSecurityContext.enabled Enabled Kimai containers' Security Context
+  ## @param webui.containerSecurityContext.runAsUser Set Kimai container's Security Context runAsUser
+  ## @param webui.containerSecurityContext.runAsNonRoot Set Kimai container's Security Context runAsNonRoot
+  ## @param webui.containerSecurityContext.allowPrivilegeEscalation Set Kimai container's privilege escalation
+  ## @param webui.containerSecurityContext.capabilities.drop Set Kimai container's Security Context runAsNonRoot
+  ##
+  containerSecurityContext:
+    enabled: false
+    runAsUser: 1001
+    runAsNonRoot: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: ["ALL"]
+  ## OTHER PARAMETERS RELATED TO Webui CONTAINER/POD
+
+  ## @param webui.existingConfigmap The name of an existing ConfigMap with your custom configuration for webui
+  ##
+  existingConfigmap:
+  ## @param webui.command Override default container command (useful when using custom images)
+  ##
+  command: []
+  ## @param webui.args Override default container args (useful when using custom images)
+  ##
+  args: []
+  ## @param webui.hostAliases webui pods host aliases
+  ## https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/
+  ##
+  hostAliases: []
+  ## @param webui.deploymentAnnotations Annotations for webui deployment
+  ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+  ##
+  deploymentAnnotations: {}
+  ## @param webui.podLabels Extra labels for webui pods
+  ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+  ##
+  podLabels: {}
+  ## @param webui.podAnnotations Annotations for webui pods
+  ## ref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/
+  ##
+  podAnnotations: {}
+  ## @param webui.podAffinityPreset Pod affinity preset. Ignored if `webui.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAffinityPreset: ""
+  ## @param webui.podAntiAffinityPreset Pod anti-affinity preset. Ignored if `webui.affinity` is set. Allowed values: `soft` or `hard`
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity
+  ##
+  podAntiAffinityPreset: soft
+  ## Pod Disruption Budget configuration
+  ## ref: https://kubernetes.io/docs/tasks/run-application/configure-pdb
+  ## @param webui.pdb.create Enable/disable a Pod Disruption Budget creation
+  ## @param webui.pdb.minAvailable Minimum number/percentage of pods that should remain scheduled
+  ## @param webui.pdb.maxUnavailable Maximum number/percentage of pods that may be made unavailable
+  ##
+  pdb:
+    create: true
+    minAvailable: 1
+    maxUnavailable: ""
+  ## Autoscaling configuration
+  ## ref: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/
+  ## @param webui.autoscaling.enabled Enable autoscaling for webui
+  ## @param webui.autoscaling.minReplicas Minimum number of webui replicas
+  ## @param webui.autoscaling.maxReplicas Maximum number of webui replicas
+  ## @param webui.autoscaling.targetCPU Target CPU utilization percentage
+  ## @param webui.autoscaling.targetMemory Target Memory utilization percentage
+  ##
+  autoscaling:
+    enabled: false
+    minReplicas: 1
+    maxReplicas: 11
+    targetCPU: 80
+    targetMemory: 80
+  ## Node webui.affinity preset
+  ## ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#node-affinity
+  ##
+  nodeAffinityPreset:
+    ## @param webui.nodeAffinityPreset.type Node affinity preset type. Ignored if `webui.affinity` is set. Allowed values: `soft` or `hard`
+    ##
+    type: ""
+    ## @param webui.nodeAffinityPreset.key Node label key to match. Ignored if `webui.affinity` is set
+    ##
+    key: ""
+    ## @param webui.nodeAffinityPreset.values Node label values to match. Ignored if `webui.affinity` is set
+    ## E.g.
+    ## values:
+    ##   - e2e-az1
+    ##   - e2e-az2
+    ##
+    values: []
+  ## @param webui.affinity Affinity for webui pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity
+  ## NOTE: `webui.podAffinityPreset`, `webui.podAntiAffinityPreset`, and `webui.nodeAffinityPreset` will be ignored when it's set
+  ##
+  affinity: {}
+  ## @param webui.nodeSelector Node labels for webui pods assignment
+  ## ref: https://kubernetes.io/docs/user-guide/node-selection/
+  ##
+  nodeSelector: {}
+  ## @param webui.tolerations Tolerations for webui pods assignment
+  ## ref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/
+  ##
+  tolerations: []
+  ## @param webui.updateStrategy.type webui statefulset strategy type
+  ## ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies
+  ##
+  updateStrategy:
+    ## StrategyType
+    ## Can be set to RollingUpdate or OnDelete
+    ##
+    type: RollingUpdate
+  ## @param webui.priorityClassName webui pods' priorityClassName
+  ##
+  priorityClassName: ""
+  ## @param webui.topologySpreadConstraints Topology Spread Constraints for pod assignment spread across your cluster among failure-domains. Evaluated as a template
+  ## Ref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/#spread-constraints-for-pods
+  ##
+  topologySpreadConstraints: []
+  ## @param webui.schedulerName Name of the k8s scheduler (other than default) for webui pods
+  ## ref: https://kubernetes.io/docs/tasks/administer-cluster/configure-multiple-schedulers/
+  ##
+  schedulerName: ""
+  ## @param webui.terminationGracePeriodSeconds Seconds Redmine pod needs to terminate gracefully
+  ## ref: https://kubernetes.io/docs/concepts/workloads/pods/pod/#termination-of-pods
+  ##
+  terminationGracePeriodSeconds: ""
+  ## @param webui.lifecycleHooks for the webui container(s) to automate configuration before or after startup
+  ##
+  lifecycleHooks: {}
+  ## @param webui.extraEnvVars Array with extra environment variables to add to webui nodes
+  ## e.g:
+  ## extraEnvVars:
+  ##   - name: FOO
+  ##     value: "bar"
+  ##
+  extraEnvVars: []
+  ## @param webui.extraEnvVarsCM Name of existing ConfigMap containing extra env vars for webui nodes
+  ##
+  extraEnvVarsCM: ""
+  ## @param webui.extraEnvVarsSecret Name of existing Secret containing extra env vars for webui nodes
+  ##
+  extraEnvVarsSecret: ""
+  ## @param webui.extraVolumes Optionally specify extra list of additional volumes for the webui pod(s)
+  ##
+  extraVolumes: []
+  ## @param webui.extraVolumeMounts Optionally specify extra list of additional volumeMounts for the webui container(s)
+  ##
+  extraVolumeMounts: []
+  ## @param webui.sidecars Add additional sidecar containers to the webui pod(s)
+  ## e.g:
+  ## sidecars:
+  ##   - name: your-image-name
+  ##     image: your-image
+  ##     imagePullPolicy: Always
+  ##     ports:
+  ##       - name: portname
+  ##         containerPort: 1234
+  ##
+  sidecars: []
+  ## @param webui.initContainers Add additional init containers to the webui pod(s)
+  ## ref: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/
+  ## e.g:
+  ## initContainers:
+  ##  - name: your-image-name
+  ##    image: your-image
+  ##    imagePullPolicy: Always
+  ##    command: ['sh', '-c', 'echo "hello world"']
+  ##
+  initContainers: []
+
+  ## @section Webui Traffic Exposure Parameters
+  ##
+
+  ## Webui service parameters
+  ##
+  service:
+    ## @param webui.service.type webui service type
+    ##
+    type: ClusterIP
+    ## @param webui.service.ports.http webui service HTTP port
+    ##
+    ports:
+      http: 80
+    ## Node ports to expose
+    ## @param webui.service.nodePorts.http Node port for HTTP
+    ## NOTE: choose port between <30000-32767>
+    ##
+    nodePorts:
+      http: ""
+    ## @param webui.service.clusterIP webui service Cluster IP
+    ## e.g.:
+    ## clusterIP: None
+    ##
+    clusterIP: ""
+    ## @param webui.service.loadBalancerIP webui service Load Balancer IP
+    ## ref: https://kubernetes.io/docs/concepts/services-networking/service/#type-loadbalancer
+    ##
+    loadBalancerIP: ""
+    ## @param webui.service.loadBalancerSourceRanges webui service Load Balancer sources
+    ## ref: https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service
+    ## e.g:
+    ## loadBalancerSourceRanges:
+    ##   - 10.10.10.0/24
+    ##
+    loadBalancerSourceRanges: []
+    ## @param webui.service.externalTrafficPolicy webui service external traffic policy
+    ## ref http://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip
+    ##
+    externalTrafficPolicy: Cluster
+    ## @param webui.service.annotations Additional custom annotations for webui service
+    ##
+    annotations: {}
+    ## @param webui.service.extraPorts Extra ports to expose in webui service (normally used with the `sidecars` value)
+    ##
+    extraPorts: []
+    ## @param webui.service.sessionAffinity Control where client requests go, to the same pod or round-robin
+    ## Values: ClientIP or None
+    ## ref: https://kubernetes.io/docs/user-guide/services/
+    ##
+    sessionAffinity: None
+    ## @param webui.service.sessionAffinityConfig Additional settings for the sessionAffinity
+    ## sessionAffinityConfig:
+    ##   clientIP:
+    ##     timeoutSeconds: 300
+    ##
+    sessionAffinityConfig: {}
+
+## ServiceAccount configuration
+##
+serviceAccount:
+  ## @param serviceAccount.create Specifies whether a ServiceAccount should be created
+  ##
+  create: true
+  ## @param serviceAccount.name The name of the ServiceAccount to use.
+  ## If not set and create is true, a name is generated using the common.names.fullname template
+  ##
+  name: ""
+  ## @param serviceAccount.annotations Additional Service Account annotations (evaluated as a template)
+  ##
+  annotations: {}
+  ## @param serviceAccount.automountServiceAccountToken Automount service account token for the server service account
+  ##
+  automountServiceAccountToken: true
+
+## @section Ingress Parameters
+##
+
+## Configure the ingress resource that allows you to access the Ollama installation
+## ref: https://kubernetes.io/docs/concepts/services-networking/ingress/
+##
+## Ingress configuration
+## ref: http://kubernetes.io/docs/user-guide/ingress/
+##
+ingress:
+  ## @param ingress.enabled Enable ingress record generation for Ollama WebUI
+  ##
+  enabled: false
+  ## @param ingress.pathType Ingress path type
+  ##
+  pathType: ImplementationSpecific
+  ## @param ingress.apiVersion Force Ingress API version (automatically detected if not set)
+  ##
+  apiVersion: ""
+  ## @param ingress.hostname Default host for the ingress record
+  ##
+  hostname: ollama.local
+  ## @param ingress.ingressClassName IngressClass that will be be used to implement the Ingress (Kubernetes 1.18+)
+  ## This is supported in Kubernetes 1.18+ and required if you have more than one IngressClass marked as the default for your cluster .
+  ## ref: https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/
+  ##
+  ingressClassName: ""
+  ## @param ingress.path Default path for the ingress record
+  ## NOTE: You may need to set this to '/*' in order to use this with ALB ingress controllers
+  ##
+  path: /
+  ## @param ingress.annotations Additional annotations for the Ingress resource. To enable certificate autogeneration, place here your cert-manager annotations.
+  ## Use this parameter to set the required annotations for cert-manager, see
+  ## ref: https://cert-manager.io/docs/usage/ingress/#supported-annotations
+  ## e.g:
+  ## annotations:
+  ##   kubernetes.io/ingress.class: nginx
+  ##   cert-manager.io/cluster-issuer: cluster-issuer-name
+  ##
+  annotations: {}
+  ## @param ingress.tls Enable TLS configuration for the host defined at `ingress.hostname` parameter
+  ## TLS certificates will be retrieved from a TLS secret with name: `{{- printf "%s-tls" .Values.ingress.hostname }}`
+  ## You can:
+  ##   - Use the `ingress.secrets` parameter to create this TLS secret
+  ##   - Rely on cert-manager to create it by setting the corresponding annotations
+  ##   - Rely on Helm to create self-signed certificates by setting `ingress.selfSigned=true`
+  ##
+  tls: false
+  ## @param ingress.selfSigned Create a TLS secret for this ingress record using self-signed certificates generated by Helm
+  ##
+  selfSigned: false
+  ## @param ingress.extraHosts An array with additional hostname(s) to be covered with the ingress record
+  ## e.g:
+  ## extraHosts:
+  ##   - name: ollama.local
+  ##     path: /
+  ##
+  extraHosts: []
+  ## @param ingress.extraPaths An array with additional arbitrary paths that may need to be added to the ingress under the main host
+  ## e.g:
+  ## extraPaths:
+  ## - path: /*
+  ##   backend:
+  ##     serviceName: ssl-redirect
+  ##     servicePort: use-annotation
+  ##
+  extraPaths: []
+  ## @param ingress.extraTls TLS configuration for additional hostname(s) to be covered with this ingress record
+  ## ref: https://kubernetes.io/docs/concepts/services-networking/ingress/#tls
+  ## e.g:
+  ## extraTls:
+  ## - hosts:
+  ##     - ollama.local
+  ##   secretName: ollama.local-tls
+  ##
+  extraTls: []
+  ## @param ingress.secrets Custom TLS certificates as secrets
+  ## NOTE: 'key' and 'certificate' are expected in PEM format
+  ## NOTE: 'name' should line up with a 'secretName' set further up
+  ## If it is not set and you're using cert-manager, this is unneeded, as it will create a secret for you with valid certificates
+  ## If it is not set and you're NOT using cert-manager either, self-signed certificates will be created valid for 365 days
+  ## It is also possible to create and manage the certificates outside of this helm chart
+  ## Please see README.md for more information
+  ## e.g:
+  ## secrets:
+  ##   - name: ollama.local-tls
+  ##     key: |-
+  ##       -----BEGIN RSA PRIVATE KEY-----
+  ##       ...
+  ##       -----END RSA PRIVATE KEY-----
+  ##     certificate: |-
+  ##       -----BEGIN CERTIFICATE-----
+  ##       ...
+  ##       -----END CERTIFICATE-----
+  ##
+  secrets: []
+  ## @param ingress.extraRules Additional rules to be covered with this ingress record
+  ## ref: https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-rules
+  ## e.g:
+  ## extraRules:
+  ## - host: example.local
+  ##     http:
+  ##       path: /
+  ##       backend:
+  ##         service:
+  ##           name: example-svc
+  ##           port:
+  ##             name: http
+  ##
+  extraRules: []
+
+## @section Database Parameters
+##
+
+## MongoDB chart configuration
+## ref: https://github.com/bitnami/charts/blob/main/bitnami/mongodb/values.yaml
+##
+mongodb:
+  ## @param mongodb.enabled Deploy a MongoDB server to satisfy the applications database requirements
+  ## To use an external database set this to false and configure the `externalDatabase.*` parameters
+  ##
+  enabled: false
+  ## MongoDB(&reg;) Authentication parameters
+  ##
+  auth:
+    ## @param mongodb.auth.enabled Enable authentication
+    ## ref: https://github.com/bitnami/charts/blob/main/bitnami/mongodb/values.yaml
+    ##
+    enabled: true
+    ## @param mongodb.auth.rootUser MongoDB(&reg;) root user
+    ##
+    rootUser: root
+    ## @param mongodb.auth.rootPassword MongoDB(&reg;) root password
+    ## ref: https://github.com/bitnami/charts/blob/main/bitnami/mongodb/values.yaml
+    ##
+    rootPassword: example
+
+  ## @section Database Persistence parameters
+  ##
+
+  ## MongoDB Primary Persistence parameters
+  ## ref: http://kubernetes.io/docs/user-guide/persistent-volumes/
+  ## @param mongodb.persistence.enabled Enable persistence on MongoDB using PVC(s)
+  ## @param mongodb.persistence.storageClass Persistent Volume storage class
+  ## @param mongodb.persistence.accessModes [array] Persistent Volume access modes
+  ## @param mongodb.persistence.size Persistent Volume size
+  ##
+  persistence:
+    enabled: true
+    storageClass: ""
+    accessModes:
+      - ReadWriteOnce
+    size: 4Gi
+
+  ## @param mongodb.databaseUrl Set this if databaseUrl differs from standalone MongoDB URL structure (e.g: when using StatefulSets)
+  ## Default Url format: mongodb://ollama:ollamaR00tPassw0rd@example-mongodb.ollama:27017/
+  ##
+  databaseUrl:
+
+## @section External Database parameters
+##
+
+## External Database Configuration
+## All of these values are only used if `mongodb.enabled=false`
+##
+externalDatabase:
+  ## @param externalDatabase.enabled To use an external database set this to true and set mongodb.enabled to false
+  ##
+  enabled: false
+  ## @param externalDatabase.databaseUrl External Database Url string
+  ## Default Url format: mongodb://ollama:ollamaR00tPassw0rd@example-mongodb.ollama:27017/
+  ##
+  databaseUrl:
+  ## @param externalDatabase.existingSecret The name of an existing secret with database credentials. Evaluated as a template
+  ## NOTE: Must contain key `mongodb-database-url`
+  ## NOTE: When it's set, the `externalDatabase.databaseUrl` parameter is ignored
+  ##
+  existingSecret: ""

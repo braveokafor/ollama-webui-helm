@@ -1,0 +1,147 @@
+apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
+kind: Deployment
+metadata:
+  name: {{ include "common.names.fullname" . }}-webui
+  namespace: {{ .Release.Namespace | quote }}
+  labels: {{- include "common.labels.standard" . | nindent 4 }}
+    {{- if .Values.commonLabels }}
+    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
+    {{- end }}
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "webui.selectorLabels" . | nindent 6 }}
+  {{- if .Values.webui.updateStrategy }}
+  strategy: {{- toYaml .Values.webui.updateStrategy | nindent 4 }}
+  {{- end }}
+  {{- if not .Values.webui.autoscaling.enabled }}
+  replicas: {{ .Values.webui.replicaCount }}
+  {{- end }}
+  template:
+    metadata:
+      labels: {{- include "webui.selectorLabels" . | nindent 8 }}
+        {{- if .Values.webui.podLabels }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.webui.podLabels "context" $) | nindent 8 }}
+        {{- end }}
+      annotations:
+      {{- if .Values.webui.podAnnotations }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.webui.podAnnotations "context" $) | nindent 8 }}
+      {{- end }}
+    spec:
+      {{- include "webui.imagePullSecrets" . | nindent 6 }}
+      {{- if .Values.webui.hostAliases }}
+      # yamllint disable rule:indentation
+      hostAliases: {{- include "common.tplvalues.render" (dict "value" .Values.webui.hostAliases "context" $) | nindent 8 }}
+      # yamllint enable rule:indentation
+      {{- end }}
+      {{- if .Values.webui.affinity }}
+      affinity: {{- include "common.tplvalues.render" (dict "value" .Values.webui.affinity "context" $) | nindent 8 }}
+      {{- else }}
+      affinity:
+        podAffinity: {{- include "common.affinities.pods" (dict "type" .Values.webui.podAffinityPreset "context" $) | nindent 10 }}
+        podAntiAffinity: {{- include "common.affinities.pods" (dict "type" .Values.webui.podAntiAffinityPreset "context" $) | nindent 10 }}
+        nodeAffinity: {{- include "common.affinities.nodes" (dict "type" .Values.webui.nodeAffinityPreset.type "key" .Values.webui.nodeAffinityPreset.key "values" .Values.webui.nodeAffinityPreset.values) | nindent 10 }}
+      {{- end }}
+      {{- if .Values.webui.nodeSelector }}
+      nodeSelector: {{- include "common.tplvalues.render" (dict "value" .Values.webui.nodeSelector "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.webui.tolerations }}
+      tolerations: {{- include "common.tplvalues.render" (dict "value" .Values.webui.tolerations "context" $) | nindent 8 }}
+      {{- end }}
+      {{- if .Values.webui.priorityClassName }}
+      priorityClassName: {{ .Values.webui.priorityClassName }}
+      {{- end }}
+      {{- if .Values.webui.schedulerName }}
+      schedulerName: {{ .Values.webui.schedulerName | quote }}
+      {{- end }}
+      {{- if .Values.webui.podSecurityContext.enabled }}
+      securityContext: {{- omit .Values.webui.podSecurityContext "enabled" | toYaml | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "webui.serviceAccountName" .}}
+      {{- if .Values.webui.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ .Values.webui.terminationGracePeriodSeconds }}
+      {{- end }}
+      {{- if .Values.webui.topologySpreadConstraints }}
+      topologySpreadConstraints: {{- include "common.tplvalues.render" (dict "value" .Values.webui.topologySpreadConstraints "context" .) | nindent 8 }}
+      {{- end }}
+      initContainers:
+        {{- if .Values.webui.initContainers }}
+          {{- include "common.tplvalues.render" (dict "value" .Values.webui.initContainers "context" $) | nindent 8 }}
+        {{- end }} 
+      containers:
+        - name: {{ .Chart.Name }}-webui
+          image: {{ include "webui.image" . }}
+          imagePullPolicy: {{ .Values.webui.image.pullPolicy | quote }}
+          {{- if .Values.diagnosticMode.enabled }}
+          command: {{- include "common.tplvalues.render" (dict "value" .Values.diagnosticMode.command "context" $) | nindent 12 }}
+          {{- else if .Values.command }}
+          command: {{- include "common.tplvalues.render" ( dict "value" .Values.command "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.diagnosticMode.enabled }}
+          args: {{- include "common.tplvalues.render" (dict "value" .Values.diagnosticMode.args "context" $) | nindent 12 }}
+          {{- else if .Values.args }}
+          args: {{- include "common.tplvalues.render" ( dict "value" .Values.args "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.webui.containerSecurityContext.enabled }}
+          securityContext: {{- omit .Values.webui.containerSecurityContext "enabled" | toYaml | nindent 12 }}
+          {{- end }}
+          env:
+            - name: OLLAMA_API_BASE_URL
+              value:  "http://{{ include "common.names.fullname" . }}-ollama:{{ .Values.ollama.service.ports.http }}/api"
+            {{- if .Values.webui.extraEnvVars }}
+            {{- include "common.tplvalues.render" (dict "value" .Values.webui.extraEnvVars "context" $) | nindent 12 }}
+            {{- end }}
+            {{- if (or .Values.mongodb.enabled .Values.externalDatabase.enabled) }}
+            - name: WEBUI_AUTH
+              value: "TRUE"          
+            - name: WEBUI_JWT_SECRET_KEY
+              value: {{ .Values.webui.JWTSecretKey }}          
+            - name: WEBUI_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  {{- if .Values.externalDatabase.existingSecret }}
+                  name: {{ .Values.externalDatabase.existingSecret }}
+                  {{- else }}
+                  name: {{ printf "%s-mongodb" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" }}
+                  {{- end }}
+                  key: mongodb-database-url
+            {{- end}}              
+          envFrom:
+            {{- if .Values.webui.extraEnvVarsCM }}
+            - configMapRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.webui.extraEnvVarsCM "context" $) }}
+            {{- end }}
+            {{- if .Values.webui.extraEnvVarsSecret }}
+            - secretRef:
+                name: {{ include "common.tplvalues.render" (dict "value" .Values.webui.extraEnvVarsSecret "context" $) }}
+            {{- end }}
+          ports:
+          - name: http
+            containerPort: {{ .Values.webui.containerPorts.http }}
+          {{- if .Values.webui.lifecycleHooks }}
+          lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.webui.lifecycleHooks "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.webui.customLivenessProbe }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.webui.customLivenessProbe "context" $) | nindent 12 }}
+          {{- else if .Values.webui.livenessProbe.enabled }}
+          livenessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.webui.livenessProbe "enabled") "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.webui.customReadinessProbe }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" .Values.webui.customReadinessProbe "context" $) | nindent 12 }}
+          {{- else if .Values.webui.readinessProbe.enabled }}
+          readinessProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.webui.readinessProbe "enabled") "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.webui.customStartupProbe }}
+          startupProbe: {{- include "common.tplvalues.render" (dict "value" .Values.webui.customStartupProbe "context" $) | nindent 12 }}
+          {{- else if .Values.webui.startupProbe.enabled }}
+          startupProbe: {{- include "common.tplvalues.render" (dict "value" (omit .Values.webui.startupProbe "enabled") "context" $) | nindent 12 }}
+          {{- end }}
+          {{- if .Values.webui.resources }}
+          resources: {{- toYaml .Values.webui.resources | nindent 12 }}
+          {{- end }}
+        {{- if .Values.ollama.sidecars }}
+        {{- include "common.tplvalues.render" (dict "value" .Values.ollama.sidecars "context" $) | nindent 8 }}
+        {{- end }}

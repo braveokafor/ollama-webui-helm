@@ -121,14 +121,16 @@ jobs:
 
       - name: Run helm-template
         run: |
+          mkdir manifests
+
           for dir in charts/*/
           do
-              (cd ${dir}; helm template . > manifest.yaml)
+              helm template "${dir}" > "manifests/$(basename $dir).yaml"
           done
       - name: Run kubeval
         uses: instrumenta/kubeval-action@master
         with:
-          files: manifest.yaml
+          files: "manifests"
           version: ${{ matrix.k8s }}
 
   install-chart:
