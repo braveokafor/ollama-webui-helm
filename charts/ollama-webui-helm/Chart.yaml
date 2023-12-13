@@ -17,12 +17,12 @@ sources:
   - https://github.com/braveokafor/ollama-webui-helm/
 dependencies:
   - name: common
-    repository: oci://registry-1.docker.io/bitnamicharts
+    repository: https://charts.bitnami.com/bitnami
     tags:
       - bitnami-common
     version: 2.x.x
   - name: mongodb
-    repository: oci://registry-1.docker.io/bitnamicharts
+    repository: https://charts.bitnami.com/bitnami
     tags:
       - bitnami-mongodb
     version: 14.x.x
