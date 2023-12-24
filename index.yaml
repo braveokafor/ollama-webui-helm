@@ -4,6 +4,44 @@ entries:
   - annotations:
       licenses: MIT
     apiVersion: v2
+    appVersion: 0.1.17
+    created: "2023-12-24T14:45:02.013707254Z"
+    dependencies:
+    - name: common
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-common
+      version: 2.x.x
+    - condition: mongodb.enabled
+      name: mongodb
+      repository: https://charts.bitnami.com/bitnami
+      tags:
+      - bitnami-mongodb
+      version: 14.x.x
+    description: "ChatGPT-Style Web UI Client for Ollama \U0001F999"
+    digest: f5d5a4e4a624643d5812d3c3d939e137599301296dd456a565845f9a28af381f
+    home: https://github.com/braveokafor/ollama-webui-helm/
+    icon: https://ollama.ai/public/ollama.png
+    keywords:
+    - ollama
+    - ollama-webui
+    - llm
+    - llama
+    maintainers:
+    - email: okaforbrave@gmail.com
+      name: braveokafor
+      url: https://www.linkedin.com/in/braveokafor/
+    name: ollama-webui
+    sources:
+    - https://github.com/jmorganca/ollama
+    - https://github.com/ollama-webui/ollama-webui
+    - https://github.com/braveokafor/ollama-webui-helm/
+    urls:
+    - https://github.com/braveokafor/ollama-webui-helm/releases/download/0.1.2-helm/ollama-webui-0.1.2.tgz
+    version: 0.1.2
+  - annotations:
+      licenses: MIT
+    apiVersion: v2
     appVersion: 0.1.13
     created: "2023-12-13T15:28:03.042896342Z"
     dependencies:
@@ -77,4 +115,4 @@ entries:
     urls:
     - https://github.com/braveokafor/ollama-webui-helm/releases/download/0.1.0-helm/ollama-webui-0.1.0.tgz
     version: 0.1.0
-generated: "2023-12-13T15:28:03.042906802Z"
+generated: "2023-12-24T14:45:02.013718385Z"
