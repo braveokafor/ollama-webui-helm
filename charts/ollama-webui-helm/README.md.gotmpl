@@ -71,6 +71,54 @@ Alternatively, a YAML file that specifies the values for the above parameters ca
 helm install ollama -f values.yaml ollama-webui/ollama-webui
 ```
 
+Example fully configured `values.yaml`:  
+
+```yaml
+ollama:
+  gpu:
+    enabled: "true"
+    num: 2
+  pdb:
+    create: "true"
+  autoscaling:
+    enabled: false
+  persistence:
+    accessModes:
+      - ReadWriteOnce
+  nodeSelector:
+    cloud.google.com/gke-spot: "true"
+    cloud.google.com/gke-accelerator: "nvidia-tesla-t4"
+  resources:
+    requests:
+      memory: 8192Mi
+      cpu: 4000m
+
+webui:
+  nodeSelector:
+    cloud.google.com/gke-spot: "true"
+
+mongodb:
+  enabled: true
+
+ingress:
+  enabled: true
+  pathType: Prefix
+  hostname: ollama.example.com
+  annotations:
+    kubernetes.io/ingress.global-static-ip-name: ollama
+    kubernetes.io/ingress.class: gce
+  extraRoutes:
+    - name: api.ollama.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: ollama-ollama-webui-ollama
+              port:
+                name: http
+```
+
 ## Configuration and installation details
 
 ### External database support

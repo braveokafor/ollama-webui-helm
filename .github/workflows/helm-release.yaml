@@ -48,7 +48,7 @@ jobs:
               (cd "$chart_dir" && helm dependency build)
             fi
           done
-  
+
       - name: Build chart dependencies
         run: |
           for dir in charts/*/
@@ -65,3 +65,14 @@ jobs:
           CR_GENERATE_RELEASE_NOTES: true
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
           CR_RELEASE_NAME_TEMPLATE: "{{ .Version }}-helm"
+
+      - name: Push to central helm-charts repo
+        uses: cpina/github-action-push-to-another-repository@v1.7.2
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.HELM_CHARTS_REPO_TOKEN }}
+        with:
+          source-directory: "charts"
+          destination-github-username: "${GITHUB_ACTOR}"
+          destination-repository-name: "helm-charts"
+          user-email: "$GITHUB_ACTOR@users.noreply.github.com"
+          target-branch: main
