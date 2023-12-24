@@ -9,8 +9,15 @@ ChatGPT-Style Web UI Client for Ollama 🦙
 ## TL;DR
 
 ```sh
-helm repo add ollama-webui https://braveokafor.github.io/ollama-webui-helm/
-helm install ollama ollama-webui/ollama-webui
+helm repo add braveokafor https://braveokafor.github.io/helm-charts/
+helm install ollama braveokafor/ollama-webui
+```
+
+#### OR: 
+
+```sh
+helm repo add braveokafor https://charts.braveokafor.com
+helm install ollama braveokafor/ollama-webui
 ```
 
 ## Introduction
@@ -373,13 +380,15 @@ The command removes all the Kubernetes components associated with the chart and 
 | `externalDatabase.databaseUrl`    | External Database Url string                                                      | `nil`   |
 | `externalDatabase.existingSecret` | The name of an existing secret with database credentials. Evaluated as a template | `""`    |
 
+## Configuration and installation details
+
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
 
 ```console
-helm install my-release \
+helm install ollama \
   --set ollama.gpu.enabled=true \
   --set mongodb.enabled=true \
-    ollama-webui/ollama-webui
+    braveokafor/ollama-webui
 ```
 The above command enables GPU support for Ollama.
 Additionaly it installs a MongoDB deployment, and configures authentication for the WebUI.
@@ -387,10 +396,10 @@ Additionaly it installs a MongoDB deployment, and configures authentication for 
 Alternatively, a YAML file that specifies the values for the above parameters can be provided while installing the chart. For example:
 
 ```console
-helm install ollama -f values.yaml ollama-webui/ollama-webui
+helm install ollama -f values.yaml braveokafor/ollama-webui
 ```
 
-Example fully configured `values.yaml`: 
+Example fully configured `values.yaml`:
 
 ```yaml
 ollama:
@@ -437,8 +446,6 @@ ingress:
               port:
                 name: http
 ```
-
-## Configuration and installation details
 
 ### External database support
 
