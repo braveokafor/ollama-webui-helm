@@ -72,7 +72,7 @@ jobs:
           API_TOKEN_GITHUB: ${{ secrets.HELM_CHARTS_REPO_TOKEN }}
         with:
           source-directory: "charts"
-          destination-github-username: "${GITHUB_ACTOR}"
+          destination-github-username: "$GITHUB_ACTOR"
           destination-repository-name: "helm-charts"
           user-email: "$GITHUB_ACTOR@users.noreply.github.com"
           target-branch: main
