@@ -43,6 +43,12 @@ spec:
             {{- end }}
             backend: {{- include "common.ingress.backend" (dict "serviceName" (include "common.names.fullname" $) "servicePort" "http" "context" $) | nindent 14 }}
     {{- end }}
+    {{- range .Values.ingress.extraRoutes }}
+    - host: {{ tpl .name $ | quote }}
+      http:
+        paths:
+        {{- toYaml .paths | nindent 10 }}
+    {{- end }}
     {{- if .Values.ingress.extraRules }}
     {{- include "common.tplvalues.render" (dict "value" .Values.ingress.extraRules "context" $) | nindent 4 }}
     {{- end }}
