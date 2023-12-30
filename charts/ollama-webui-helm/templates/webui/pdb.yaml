@@ -1,0 +1,24 @@
+{{- $replicaCount := int .Values.webui.replicaCount }}
+{{- if and .Values.webui.pdb.create (or (gt $replicaCount 1) .Values.webui.autoscaling.enabled) }}
+apiVersion: {{ include "common.capabilities.policy.apiVersion" . }}
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "webui.name" . }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: webui
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.webui.pdb.minAvailable }}
+  minAvailable: {{ .Values.webui.pdb.minAvailable }}
+  {{- end  }}
+  {{- if .Values.webui.pdb.maxUnavailable }}
+  maxUnavailable: {{ .Values.webui.pdb.maxUnavailable }}
+  {{- end  }}
+  {{- $podLabels := include "common.tplvalues.merge" (dict "values" (list .Values.webui.podLabels .Values.commonLabels) "context" .) }}
+  selector:
+    matchLabels: {{- include "common.labels.matchLabels" ( dict "customLabels" $podLabels "context" $ ) | nindent 6 }}
+      app.kubernetes.io/component: webui
+{{- end }}

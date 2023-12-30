@@ -1,13 +1,11 @@
 {{- if .Values.ollama.autoscaling.enabled }}
-apiVersion: {{ include "common.capabilities.hpa.apiVersion" ( dict "context" $ ) }}
+apiVersion: {{ include "common.capabilities.hpa.apiVersion" (dict "context" $) }}
 kind: HorizontalPodAutoscaler
 metadata:
-  name: {{ include "common.names.fullname" . }}-ollama
-  namespace: {{ .Release.Namespace | quote }}
-  labels: {{- include "common.labels.standard" . | nindent 4 }}
-    {{- if .Values.commonLabels }}
-    {{- include "common.tplvalues.render" ( dict "value" .Values.commonLabels "context" $ ) | nindent 4 }}
-    {{- end }}
+  name: {{ include "ollama.name" . }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: ollama
   {{- if .Values.commonAnnotations }}
   annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
   {{- end }}
@@ -15,7 +13,7 @@ spec:
   scaleTargetRef:
     apiVersion: {{ include "common.capabilities.deployment.apiVersion" . }}
     kind: Deployment
-    name: {{ include "common.names.fullname" . }}-ollama
+    name: {{ include "ollama.name" . }}
   minReplicas: {{ .Values.ollama.autoscaling.minReplicas }}
   maxReplicas: {{ .Values.ollama.autoscaling.maxReplicas }}
   metrics:
@@ -24,7 +22,7 @@ spec:
       resource:
         name: memory
         {{- if semverCompare "<1.23-0" (include "common.capabilities.kubeVersion" .) }}
-        targetAverageUtilization: {{ .Values.ollama.autoscaling.targetMemory }}
+        targetAverageUtilization: {{ .Values.ollama.autoscaling.targetMemory  }}
         {{- else }}
         target:
           type: Utilization

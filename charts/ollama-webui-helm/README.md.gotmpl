@@ -58,9 +58,6 @@ helm delete ollama
 
 The command removes all the Kubernetes components associated with the chart and deletes the release.
 
-## Parameters
-
-
 ## Configuration and installation details
 
 Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
@@ -68,11 +65,11 @@ Specify each parameter using the `--set key=value[,key=value]` argument to `helm
 ```console
 helm install ollama \
   --set ollama.gpu.enabled=true \
-  --set mongodb.enabled=true \
+  --set webui.ingress.enabled=true \
+  --set webui.ingress.hostname=ollama.example.com
     braveokafor/ollama-webui
 ```
 The above command enables GPU support for Ollama.
-Additionaly it installs a MongoDB deployment, and configures authentication for the WebUI.
 
 Alternatively, a YAML file that specifies the values for the above parameters can be provided while installing the chart. For example:
 
@@ -83,12 +80,25 @@ helm install ollama -f values.yaml braveokafor/ollama-webui
 Example fully configured `values.yaml`: 
 
 ```yaml
+# values.yaml
+
+webui:
+  nodeSelector:
+    cloud.google.com/gke-spot: "true"
+  ingress:
+    enabled: true
+    pathType: Prefix
+    hostname: ollama.braveokafor.com
+    annotations:
+      kubernetes.io/ingress.global-static-ip-name: ollama-ui
+      kubernetes.io/ingress.class: gce
+
 ollama:
   gpu:
     enabled: "true"
-    num: 2
+    num: 1
   pdb:
-    create: "true"
+    create: "false"
   autoscaling:
     enabled: false
   persistence:
@@ -101,43 +111,14 @@ ollama:
     requests:
       memory: 8192Mi
       cpu: 4000m
-
-webui:
-  nodeSelector:
-    cloud.google.com/gke-spot: "true"
-
-mongodb:
-  enabled: true
-
-ingress:
-  enabled: true
-  pathType: Prefix
-  hostname: ollama.example.com
-  annotations:
-    kubernetes.io/ingress.global-static-ip-name: ollama
-    kubernetes.io/ingress.class: gce
-  extraRoutes:
-    - name: api.ollama.example.com
-      paths:
-        - path: /
-          pathType: Prefix
-          backend:
-            service:
-              name: ollama-ollama-webui-ollama
-              port:
-                name: http
-```
-
-### External database support
-
-You may want to have Ollama WebUI connect to an external database rather than installing one inside your cluster. Typical reasons for this are to use a managed database service, or to share a common database server for all your applications.  
-
-To achieve this, the chart allows you to specify credentials for an external database with the [`externalDatabase` parameter](#database-parameters). You should also disable the MongoDB installation with the `mongodb.enabled` option. Here is an example:
-
-```console
-mongodb.enabled=false
-externalDatabase.enabled=true
-externalDatabase.databaseUrl="mongodb://ollama:ollamaR00tPassw0rd@example-mongodb.ollama:27017/"
+  tolerations:
+    - key: nvidia.com/gpu
+      operator: Exists
+      effect: NoSchedule
+  ingress:
+    enabled: false
+  service:
+    type: LoadBalancer
 ```
 
 ### Ingress
@@ -145,10 +126,14 @@ externalDatabase.databaseUrl="mongodb://ollama:ollamaR00tPassw0rd@example-mongod
 This chart provides support for Ingress resources.  
 If an Ingress controller, such as [nginx-ingress](https://kubeapps.com/charts/stable/nginx-ingress) or [traefik](https://kubeapps.com/charts/stable/traefik) is installed on the cluster, that Ingress controller can be used to serve Ollama WebUI.
 
-To enable Ingress integration, set `ingress.enabled` to `true`.  
-The `ingress.hostname` property can be used to set the host name.  
-The `ingress.tls` parameter can be used to add the TLS configuration for this host. 
+To enable Ingress integration, set `webui.ingress.enabled` to `true`.  
+The `webui.ingress.hostname` property can be used to set the host name.  
+The `webui.ingress.tls` parameter can be used to add the TLS configuration for this host. 
 
 ### TLS secrets
 
 The chart also facilitates the creation of TLS secrets for use with the Ingress controller, with different options for certificate management.
+
+
+## Parameters
+

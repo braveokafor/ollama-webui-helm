@@ -1,0 +1,55 @@
+{{- if .Values.webui.ingress.enabled }}
+apiVersion: {{ include "common.capabilities.ingress.apiVersion" . }}
+kind: Ingress
+metadata:
+  name: {{ template "webui.name" . }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: webui
+  {{- if or .Values.webui.ingress.annotations .Values.commonAnnotations }}
+  {{- $annotations := include "common.tplvalues.merge" (dict "values" (list .Values.webui.ingress.annotations .Values.commonAnnotations) "context" .) }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" $annotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if and .Values.webui.ingress.ingressClassName (eq "true" (include "common.ingress.supportsIngressClassname" .)) }}
+  ingressClassName: {{ .Values.webui.ingress.ingressClassName | quote }}
+  {{- end }}
+  rules:
+    {{- if .Values.webui.ingress.hostname }}
+    - host: {{ .Values.webui.ingress.hostname }}
+      http:
+        paths:
+          {{- if .Values.webui.ingress.extraPaths }}
+          {{- toYaml .Values.webui.ingress.extraPaths | nindent 10 }}
+          {{- end }}
+          - path: {{ .Values.webui.ingress.path }}
+            {{- if eq "true" (include "common.ingress.supportsPathType" .) }}
+            pathType: {{ .Values.webui.ingress.pathType }}
+            {{- end }}
+            backend: {{- include "common.ingress.backend" (dict "serviceName" (include "webui.name" .) "servicePort" "http" "context" $)  | nindent 14 }}
+    {{- end }}
+    {{- range .Values.webui.ingress.extraHosts }}
+    - host: {{ .name | quote }}
+      http:
+        paths:
+          - path: {{ default "/" .path }}
+            {{- if eq "true" (include "common.ingress.supportsPathType" $) }}
+            pathType: {{ default "ImplementationSpecific" .pathType }}
+            {{- end }}
+            backend: {{- include "common.ingress.backend" (dict "serviceName" (include "webui.name" $) "servicePort" "http" "context" $) | nindent 14 }}
+    {{- end }}
+    {{- if .Values.webui.ingress.extraRules }}
+    {{- include "common.tplvalues.render" (dict "value" .Values.webui.ingress.extraRules "context" $) | nindent 4 }}
+    {{- end }}
+  {{- if or (and .Values.webui.ingress.tls (or (include "common.ingress.certManagerRequest" ( dict "annotations" .Values.webui.ingress.annotations )) .Values.webui.ingress.selfSigned)) .Values.webui.ingress.extraTls }}
+  tls:
+    {{- if and .Values.webui.ingress.tls (or (include "common.ingress.certManagerRequest" ( dict "annotations" .Values.webui.ingress.annotations )) .Values.webui.ingress.selfSigned) }}
+    - hosts:
+        - {{ .Values.webui.ingress.hostname | quote }}
+      secretName: {{ printf "%s-tls" .Values.webui.ingress.hostname }}
+    {{- end }}
+    {{- if .Values.webui.ingress.extraTls }}
+    {{- include "common.tplvalues.render" (dict "value" .Values.webui.ingress.extraTls "context" $) | nindent 4 }}
+    {{- end }}
+  {{- end }}
+{{- end }}

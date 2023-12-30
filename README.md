@@ -1,6 +1,6 @@
 # ollama-webui
 
-![Version: 0.1.2](https://img.shields.io/badge/Version-0.1.2-informational?style=flat-square) ![AppVersion: 0.1.17](https://img.shields.io/badge/AppVersion-0.1.17-informational?style=flat-square)
+![Version: 0.1.3](https://img.shields.io/badge/Version-0.1.3-informational?style=flat-square) ![AppVersion: 0.1.17](https://img.shields.io/badge/AppVersion-0.1.17-informational?style=flat-square)
 
 ChatGPT-Style Web UI Client for Ollama 🦙
 
@@ -43,7 +43,6 @@ It enables you to run a ChatGPT-style web UI client, with a variety of open-sour
 | Repository | Name | Version |
 |------------|------|---------|
 | https://charts.bitnami.com/bitnami | common | 2.x.x |
-| https://charts.bitnami.com/bitnami | mongodb | 14.x.x |
 
 ## Installing the Chart
 
@@ -68,6 +67,82 @@ helm delete ollama
 ```
 
 The command removes all the Kubernetes components associated with the chart and deletes the release.
+
+## Configuration and installation details
+
+Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
+
+```console
+helm install ollama \
+  --set ollama.gpu.enabled=true \
+  --set webui.ingress.enabled=true \
+  --set webui.ingress.hostname=ollama.example.com
+    braveokafor/ollama-webui
+```
+The above command enables GPU support for Ollama.
+
+Alternatively, a YAML file that specifies the values for the above parameters can be provided while installing the chart. For example:
+
+```console
+helm install ollama -f values.yaml braveokafor/ollama-webui
+```
+
+Example fully configured `values.yaml`:
+
+```yaml
+# values.yaml
+
+webui:
+  nodeSelector:
+    cloud.google.com/gke-spot: "true"
+  ingress:
+    enabled: true
+    pathType: Prefix
+    hostname: ollama.braveokafor.com
+    annotations:
+      kubernetes.io/ingress.global-static-ip-name: ollama-ui
+      kubernetes.io/ingress.class: gce
+
+ollama:
+  gpu:
+    enabled: "true"
+    num: 1
+  pdb:
+    create: "false"
+  autoscaling:
+    enabled: false
+  persistence:
+    accessModes:
+      - ReadWriteOnce
+  nodeSelector:
+    cloud.google.com/gke-spot: "true"
+    cloud.google.com/gke-accelerator: "nvidia-tesla-t4"
+  resources:
+    requests:
+      memory: 8192Mi
+      cpu: 4000m
+  tolerations:
+    - key: nvidia.com/gpu
+      operator: Exists
+      effect: NoSchedule
+  ingress:
+    enabled: false
+  service:
+    type: LoadBalancer
+```
+
+### Ingress
+
+This chart provides support for Ingress resources. 
+If an Ingress controller, such as [nginx-ingress](https://kubeapps.com/charts/stable/nginx-ingress) or [traefik](https://kubeapps.com/charts/stable/traefik) is installed on the cluster, that Ingress controller can be used to serve Ollama WebUI.
+
+To enable Ingress integration, set `webui.ingress.enabled` to `true`. 
+The `webui.ingress.hostname` property can be used to set the host name. 
+The `webui.ingress.tls` parameter can be used to add the TLS configuration for this host.
+
+### TLS secrets
+
+The chart also facilitates the creation of TLS secrets for use with the Ingress controller, with different options for certificate management.
 
 ## Parameters
 
@@ -220,11 +295,36 @@ The command removes all the Kubernetes components associated with the chart and 
 | `ollama.persistence.selector`      | Selector to match an existing Persistent Volume for WordPress data PVC                                  | `{}`                |
 | `ollama.persistence.dataSource`    | Custom PVC data source                                                                                  | `{}`                |
 
+### Ollama ServiceAccount Parameters
+
+| Name                                                 | Description                                                      | Value  |
+| ---------------------------------------------------- | ---------------------------------------------------------------- | ------ |
+| `ollama.serviceAccount.create`                       | Specifies whether a ServiceAccount should be created             | `true` |
+| `ollama.serviceAccount.name`                         | The name of the ServiceAccount to use.                           | `""`   |
+| `ollama.serviceAccount.annotations`                  | Additional Service Account annotations (evaluated as a template) | `{}`   |
+| `ollama.serviceAccount.automountServiceAccountToken` | Automount service account token for the server service account   | `true` |
+
+### Ollama Ingress Parameters
+
+| Name                              | Description                                                                                                                      | Value                    |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| `ollama.ingress.enabled`          | Enable ingress record generation for ollama                                                                                      | `false`                  |
+| `ollama.ingress.pathType`         | Ingress path type                                                                                                                | `ImplementationSpecific` |
+| `ollama.ingress.apiVersion`       | Force Ingress API version (automatically detected if not set)                                                                    | `""`                     |
+| `ollama.ingress.hostname`         | Default host for the ingress record                                                                                              | `api.ollama.local`       |
+| `ollama.ingress.ingressClassName` | IngressClass that will be be used to implement the Ingress (Kubernetes 1.18+)                                                    | `""`                     |
+| `ollama.ingress.path`             | Default path for the ingress record                                                                                              | `/`                      |
+| `ollama.ingress.annotations`      | Additional annotations for the Ingress resource. To enable certificate autogeneration, place here your cert-manager annotations. | `{}`                     |
+| `ollama.ingress.tls`              | Enable TLS configuration for the host defined at `ollama.ingress.hostname` parameter                                             | `false`                  |
+| `ollama.ingress.selfSigned`       | Create a TLS secret for this ingress record using self-signed certificates generated by Helm                                     | `false`                  |
+| `ollama.ingress.extraHosts`       | An array with additional hostname(s) to be covered with the ingress record                                                       | `[]`                     |
+| `ollama.ingress.extraPaths`       | An array with additional arbitrary paths that may need to be added to the ingress under the main host                            | `[]`                     |
+| `ollama.ingress.extraTls`         | TLS configuration for additional hostname(s) to be covered with this ingress record                                              | `[]`                     |
+| `ollama.ingress.secrets`          | Custom TLS certificates as secrets                                                                                               | `[]`                     |
+| `ollama.ingress.extraRules`       | Additional rules to be covered with this ingress record                                                                          | `[]`                     |
+
 ### Webui Environment parameters
 
-| Name                 | Description    | Value        |
-| -------------------- | -------------- | ------------ |
-| `webui.JWTSecretKey` | JWT Secret Key | `SECRET_KEY` |
 
 ### Webui Image parameters
 
@@ -315,159 +415,60 @@ The command removes all the Kubernetes components associated with the chart and 
 
 ### Webui Traffic Exposure Parameters
 
-| Name                                          | Description                                                                      | Value       |
-| --------------------------------------------- | -------------------------------------------------------------------------------- | ----------- |
-| `webui.service.type`                          | webui service type                                                               | `ClusterIP` |
-| `webui.service.ports.http`                    | webui service HTTP port                                                          | `80`        |
-| `webui.service.nodePorts.http`                | Node port for HTTP                                                               | `""`        |
-| `webui.service.clusterIP`                     | webui service Cluster IP                                                         | `""`        |
-| `webui.service.loadBalancerIP`                | webui service Load Balancer IP                                                   | `""`        |
-| `webui.service.loadBalancerSourceRanges`      | webui service Load Balancer sources                                              | `[]`        |
-| `webui.service.externalTrafficPolicy`         | webui service external traffic policy                                            | `Cluster`   |
-| `webui.service.annotations`                   | Additional custom annotations for webui service                                  | `{}`        |
-| `webui.service.extraPorts`                    | Extra ports to expose in webui service (normally used with the `sidecars` value) | `[]`        |
-| `webui.service.sessionAffinity`               | Control where client requests go, to the same pod or round-robin                 | `None`      |
-| `webui.service.sessionAffinityConfig`         | Additional settings for the sessionAffinity                                      | `{}`        |
-| `serviceAccount.create`                       | Specifies whether a ServiceAccount should be created                             | `true`      |
-| `serviceAccount.name`                         | The name of the ServiceAccount to use.                                           | `""`        |
-| `serviceAccount.annotations`                  | Additional Service Account annotations (evaluated as a template)                 | `{}`        |
-| `serviceAccount.automountServiceAccountToken` | Automount service account token for the server service account                   | `true`      |
+| Name                                     | Description                                                                      | Value       |
+| ---------------------------------------- | -------------------------------------------------------------------------------- | ----------- |
+| `webui.service.type`                     | webui service type                                                               | `ClusterIP` |
+| `webui.service.ports.http`               | webui service HTTP port                                                          | `80`        |
+| `webui.service.nodePorts.http`           | Node port for HTTP                                                               | `""`        |
+| `webui.service.clusterIP`                | webui service Cluster IP                                                         | `""`        |
+| `webui.service.loadBalancerIP`           | webui service Load Balancer IP                                                   | `""`        |
+| `webui.service.loadBalancerSourceRanges` | webui service Load Balancer sources                                              | `[]`        |
+| `webui.service.externalTrafficPolicy`    | webui service external traffic policy                                            | `Cluster`   |
+| `webui.service.annotations`              | Additional custom annotations for webui service                                  | `{}`        |
+| `webui.service.extraPorts`               | Extra ports to expose in webui service (normally used with the `sidecars` value) | `[]`        |
+| `webui.service.sessionAffinity`          | Control where client requests go, to the same pod or round-robin                 | `None`      |
+| `webui.service.sessionAffinityConfig`    | Additional settings for the sessionAffinity                                      | `{}`        |
 
-### Ingress Parameters
+### WebUI Persistence Parameters
 
-| Name                       | Description                                                                                                                      | Value                    |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
-| `ingress.enabled`          | Enable ingress record generation for Ollama WebUI                                                                                | `false`                  |
-| `ingress.pathType`         | Ingress path type                                                                                                                | `ImplementationSpecific` |
-| `ingress.apiVersion`       | Force Ingress API version (automatically detected if not set)                                                                    | `""`                     |
-| `ingress.hostname`         | Default host for the ingress record                                                                                              | `ollama.local`           |
-| `ingress.ingressClassName` | IngressClass that will be be used to implement the Ingress (Kubernetes 1.18+)                                                    | `""`                     |
-| `ingress.path`             | Default path for the ingress record                                                                                              | `/`                      |
-| `ingress.annotations`      | Additional annotations for the Ingress resource. To enable certificate autogeneration, place here your cert-manager annotations. | `{}`                     |
-| `ingress.tls`              | Enable TLS configuration for the host defined at `ingress.hostname` parameter                                                    | `false`                  |
-| `ingress.selfSigned`       | Create a TLS secret for this ingress record using self-signed certificates generated by Helm                                     | `false`                  |
-| `ingress.extraHosts`       | An array with additional hostname(s) to be covered with the ingress record                                                       | `[]`                     |
-| `ingress.extraPaths`       | An array with additional arbitrary paths that may need to be added to the ingress under the main host                            | `[]`                     |
-| `ingress.extraRoutes`      | An array with additional hostname(s) and paths to be added to the ingress record                                                 | `[]`                     |
-| `ingress.extraTls`         | TLS configuration for additional hostname(s) to be covered with this ingress record                                              | `[]`                     |
-| `ingress.secrets`          | Custom TLS certificates as secrets                                                                                               | `[]`                     |
-| `ingress.extraRules`       | Additional rules to be covered with this ingress record                                                                          | `[]`                     |
+| Name                              | Description                                                                                             | Value               |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------- | ------------------- |
+| `webui.persistence.enabled`       | Enable persistence using Persistent Volume Claims                                                       | `true`              |
+| `webui.persistence.mountPath`     | Path to mount the volume at.                                                                            | `/app/backend/data` |
+| `webui.persistence.subPath`       | The subdirectory of the volume to mount to, useful in dev environments and one PV for multiple services | `""`                |
+| `webui.persistence.storageClass`  | Storage class of backing PVC                                                                            | `""`                |
+| `webui.persistence.annotations`   | Persistent Volume Claim annotations                                                                     | `{}`                |
+| `webui.persistence.accessModes`   | Persistent Volume Access Modes                                                                          | `["ReadWriteOnce"]` |
+| `webui.persistence.size`          | Size of data volume                                                                                     | `4Gi`               |
+| `webui.persistence.existingClaim` | The name of an existing PVC to use for persistence                                                      | `""`                |
+| `webui.persistence.selector`      | Selector to match an existing Persistent Volume for WordPress data PVC                                  | `{}`                |
+| `webui.persistence.dataSource`    | Custom PVC data source                                                                                  | `{}`                |
 
-### Database Parameters
+### WebUI ServiceAccount Parameters
 
-| Name                        | Description                                                               | Value     |
-| --------------------------- | ------------------------------------------------------------------------- | --------- |
-| `mongodb.enabled`           | Deploy a MongoDB server to satisfy the applications database requirements | `false`   |
-| `mongodb.auth.enabled`      | Enable authentication                                                     | `true`    |
-| `mongodb.auth.rootUser`     | MongoDB(&reg;) root user                                                  | `root`    |
-| `mongodb.auth.rootPassword` | MongoDB(&reg;) root password                                              | `example` |
+| Name                                                | Description                                                      | Value  |
+| --------------------------------------------------- | ---------------------------------------------------------------- | ------ |
+| `webui.serviceAccount.create`                       | Specifies whether a ServiceAccount should be created             | `true` |
+| `webui.serviceAccount.name`                         | The name of the ServiceAccount to use.                           | `""`   |
+| `webui.serviceAccount.annotations`                  | Additional Service Account annotations (evaluated as a template) | `{}`   |
+| `webui.serviceAccount.automountServiceAccountToken` | Automount service account token for the server service account   | `true` |
 
-### Database Persistence parameters
+### WebUI Ingress Parameters
 
-| Name                               | Description                                                                                          | Value  |
-| ---------------------------------- | ---------------------------------------------------------------------------------------------------- | ------ |
-| `mongodb.persistence.enabled`      | Enable persistence on MongoDB using PVC(s)                                                           | `true` |
-| `mongodb.persistence.storageClass` | Persistent Volume storage class                                                                      | `""`   |
-| `mongodb.persistence.accessModes`  | Persistent Volume access modes                                                                       | `[]`   |
-| `mongodb.persistence.size`         | Persistent Volume size                                                                               | `4Gi`  |
-| `mongodb.databaseUrl`              | Set this if databaseUrl differs from standalone MongoDB URL structure (e.g: when using StatefulSets) | `nil`  |
+| Name                             | Description                                                                                                                      | Value                    |
+| -------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| `webui.ingress.enabled`          | Enable ingress record generation for webui                                                                                       | `false`                  |
+| `webui.ingress.pathType`         | Ingress path type                                                                                                                | `ImplementationSpecific` |
+| `webui.ingress.apiVersion`       | Force Ingress API version (automatically detected if not set)                                                                    | `""`                     |
+| `webui.ingress.hostname`         | Default host for the ingress record                                                                                              | `ollama.local`           |
+| `webui.ingress.ingressClassName` | IngressClass that will be be used to implement the Ingress (Kubernetes 1.18+)                                                    | `""`                     |
+| `webui.ingress.path`             | Default path for the ingress record                                                                                              | `/`                      |
+| `webui.ingress.annotations`      | Additional annotations for the Ingress resource. To enable certificate autogeneration, place here your cert-manager annotations. | `{}`                     |
+| `webui.ingress.tls`              | Enable TLS configuration for the host defined at `webui.ingress.hostname` parameter                                              | `false`                  |
+| `webui.ingress.selfSigned`       | Create a TLS secret for this ingress record using self-signed certificates generated by Helm                                     | `false`                  |
+| `webui.ingress.extraHosts`       | An array with additional hostname(s) to be covered with the ingress record                                                       | `[]`                     |
+| `webui.ingress.extraPaths`       | An array with additional arbitrary paths that may need to be added to the ingress under the main host                            | `[]`                     |
+| `webui.ingress.extraTls`         | TLS configuration for additional hostname(s) to be covered with this ingress record                                              | `[]`                     |
+| `webui.ingress.secrets`          | Custom TLS certificates as secrets                                                                                               | `[]`                     |
+| `webui.ingress.extraRules`       | Additional rules to be covered with this ingress record                                                                          | `[]`                     |
 
-### External Database parameters
-
-| Name                              | Description                                                                       | Value   |
-| --------------------------------- | --------------------------------------------------------------------------------- | ------- |
-| `externalDatabase.enabled`        | To use an external database set this to true and set mongodb.enabled to false     | `false` |
-| `externalDatabase.databaseUrl`    | External Database Url string                                                      | `nil`   |
-| `externalDatabase.existingSecret` | The name of an existing secret with database credentials. Evaluated as a template | `""`    |
-
-## Configuration and installation details
-
-Specify each parameter using the `--set key=value[,key=value]` argument to `helm install`. For example,
-
-```console
-helm install ollama \
-  --set ollama.gpu.enabled=true \
-  --set mongodb.enabled=true \
-    braveokafor/ollama-webui
-```
-The above command enables GPU support for Ollama.
-Additionaly it installs a MongoDB deployment, and configures authentication for the WebUI.
-
-Alternatively, a YAML file that specifies the values for the above parameters can be provided while installing the chart. For example:
-
-```console
-helm install ollama -f values.yaml braveokafor/ollama-webui
-```
-
-Example fully configured `values.yaml`:
-
-```yaml
-ollama:
-  gpu:
-    enabled: "true"
-    num: 2
-  pdb:
-    create: "true"
-  autoscaling:
-    enabled: false
-  persistence:
-    accessModes:
-      - ReadWriteOnce
-  nodeSelector:
-    cloud.google.com/gke-spot: "true"
-    cloud.google.com/gke-accelerator: "nvidia-tesla-t4"
-  resources:
-    requests:
-      memory: 8192Mi
-      cpu: 4000m
-
-webui:
-  nodeSelector:
-    cloud.google.com/gke-spot: "true"
-
-mongodb:
-  enabled: true
-
-ingress:
-  enabled: true
-  pathType: Prefix
-  hostname: ollama.example.com
-  annotations:
-    kubernetes.io/ingress.global-static-ip-name: ollama
-    kubernetes.io/ingress.class: gce
-  extraRoutes:
-    - name: api.ollama.example.com
-      paths:
-        - path: /
-          pathType: Prefix
-          backend:
-            service:
-              name: ollama-ollama-webui-ollama
-              port:
-                name: http
-```
-
-### External database support
-
-You may want to have Ollama WebUI connect to an external database rather than installing one inside your cluster. Typical reasons for this are to use a managed database service, or to share a common database server for all your applications. 
-
-To achieve this, the chart allows you to specify credentials for an external database with the [`externalDatabase` parameter](#database-parameters). You should also disable the MongoDB installation with the `mongodb.enabled` option. Here is an example:
-
-```console
-mongodb.enabled=false
-externalDatabase.enabled=true
-externalDatabase.databaseUrl="mongodb://ollama:ollamaR00tPassw0rd@example-mongodb.ollama:27017/"
-```
-
-### Ingress
-
-This chart provides support for Ingress resources. 
-If an Ingress controller, such as [nginx-ingress](https://kubeapps.com/charts/stable/nginx-ingress) or [traefik](https://kubeapps.com/charts/stable/traefik) is installed on the cluster, that Ingress controller can be used to serve Ollama WebUI.
-
-To enable Ingress integration, set `ingress.enabled` to `true`. 
-The `ingress.hostname` property can be used to set the host name. 
-The `ingress.tls` parameter can be used to add the TLS configuration for this host.
-
-### TLS secrets
-
-The chart also facilitates the creation of TLS secrets for use with the Ingress controller, with different options for certificate management.
