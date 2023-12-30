@@ -1,0 +1,55 @@
+{{- if .Values.ollama.ingress.enabled }}
+apiVersion: {{ include "common.capabilities.ingress.apiVersion" . }}
+kind: Ingress
+metadata:
+  name: {{ template "ollama.name" . }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: ollama
+  {{- if or .Values.ollama.ingress.annotations .Values.commonAnnotations }}
+  {{- $annotations := include "common.tplvalues.merge" (dict "values" (list .Values.ollama.ingress.annotations .Values.commonAnnotations) "context" .) }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" $annotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if and .Values.ollama.ingress.ingressClassName (eq "true" (include "common.ingress.supportsIngressClassname" .)) }}
+  ingressClassName: {{ .Values.ollama.ingress.ingressClassName | quote }}
+  {{- end }}
+  rules:
+    {{- if .Values.ollama.ingress.hostname }}
+    - host: {{ .Values.ollama.ingress.hostname }}
+      http:
+        paths:
+          {{- if .Values.ollama.ingress.extraPaths }}
+          {{- toYaml .Values.ollama.ingress.extraPaths | nindent 10 }}
+          {{- end }}
+          - path: {{ .Values.ollama.ingress.path }}
+            {{- if eq "true" (include "common.ingress.supportsPathType" .) }}
+            pathType: {{ .Values.ollama.ingress.pathType }}
+            {{- end }}
+            backend: {{- include "common.ingress.backend" (dict "serviceName" (include "ollama.name" .) "servicePort" "http" "context" $)  | nindent 14 }}
+    {{- end }}
+    {{- range .Values.ollama.ingress.extraHosts }}
+    - host: {{ .name | quote }}
+      http:
+        paths:
+          - path: {{ default "/" .path }}
+            {{- if eq "true" (include "common.ingress.supportsPathType" $) }}
+            pathType: {{ default "ImplementationSpecific" .pathType }}
+            {{- end }}
+            backend: {{- include "common.ingress.backend" (dict "serviceName" (include "ollama.name" $) "servicePort" "http" "context" $) | nindent 14 }}
+    {{- end }}
+    {{- if .Values.ollama.ingress.extraRules }}
+    {{- include "common.tplvalues.render" (dict "value" .Values.ollama.ingress.extraRules "context" $) | nindent 4 }}
+    {{- end }}
+  {{- if or (and .Values.ollama.ingress.tls (or (include "common.ingress.certManagerRequest" ( dict "annotations" .Values.ollama.ingress.annotations )) .Values.ollama.ingress.selfSigned)) .Values.ollama.ingress.extraTls }}
+  tls:
+    {{- if and .Values.ollama.ingress.tls (or (include "common.ingress.certManagerRequest" ( dict "annotations" .Values.ollama.ingress.annotations )) .Values.ollama.ingress.selfSigned) }}
+    - hosts:
+        - {{ .Values.ollama.ingress.hostname | quote }}
+      secretName: {{ printf "%s-tls" .Values.ollama.ingress.hostname }}
+    {{- end }}
+    {{- if .Values.ollama.ingress.extraTls }}
+    {{- include "common.tplvalues.render" (dict "value" .Values.ollama.ingress.extraTls "context" $) | nindent 4 }}
+    {{- end }}
+  {{- end }}
+{{- end }}

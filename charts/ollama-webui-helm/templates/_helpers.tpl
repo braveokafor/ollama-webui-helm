@@ -1,26 +1,29 @@
 {{/* vim: set filetype=mustache: */}}
 
-{{/*
-Selector labels
-*/}}
-{{- define "ollama.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "common.names.fullname" . }}-ollama
-{{- end }}
-
-{{- define "webui.selectorLabels" -}}
-app.kubernetes.io/name: {{ include "common.names.fullname" . }}-webui
-{{- end }}
 
 {{/*
-Return the proper image name
+Return the proper image names
 */}}
 {{- define "ollama.image" -}}
-{{- include "common.images.image" (dict "imageRoot" .Values.ollama.image "global" .Values.global) -}}
+{{ include "common.images.image" (dict "imageRoot" .Values.ollama.image "global" .Values.global) }}
 {{- end -}}
 
 {{- define "webui.image" -}}
-{{- include "common.images.image" ( dict "imageRoot" .Values.webui.image "global" .Values.global ) -}}
+{{ include "common.images.image" (dict "imageRoot" .Values.webui.image "global" .Values.global) }}
 {{- end -}}
+
+
+{{/*
+Return the proper resource names
+*/}}
+{{- define "ollama.name" -}}
+  {{- printf "%s-ollama" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end -}}
+
+{{- define "webui.name" -}}
+  {{- printf "%s-webui" (include "common.names.fullname" .) | trunc 63 | trimSuffix "-" }}
+{{- end -}}
+
 
 {{/*
 Return the proper Docker Image Registry Secret Names
@@ -33,21 +36,22 @@ Return the proper Docker Image Registry Secret Names
 {{- include "common.images.pullSecrets" (dict "images" (list .Values.webui.image) "global" .Values.global) -}}
 {{- end -}}
 
+
 {{/*
-Create the name of the service account to use
+Create the name of the service accounts to use
 */}}
 {{- define "ollama.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create -}}
-    {{ default (include "common.names.fullname" .) .Values.serviceAccount.name }}
+{{- if .Values.ollama.serviceAccount.create -}}
+    {{ default (printf "%s-ollama" (include "common.names.fullname" .)) .Values.ollama.serviceAccount.name | trunc 63 | trimSuffix "-" }}
 {{- else -}}
-    {{ default "default" .Values.serviceAccount.name }}
+    {{ default "default" .Values.ollama.serviceAccount.name }}
 {{- end -}}
 {{- end -}}
 
 {{- define "webui.serviceAccountName" -}}
-{{- if .Values.serviceAccount.create -}}
-    {{ default (include "common.names.fullname" .) .Values.serviceAccount.name }}
+{{- if .Values.webui.serviceAccount.create -}}
+    {{ default (printf "%s-webui" (include "common.names.fullname" .)) .Values.webui.serviceAccount.name | trunc 63 | trimSuffix "-" }}
 {{- else -}}
-    {{ default "default" .Values.serviceAccount.name }}
+    {{ default "default" .Values.webui.serviceAccount.name }}
 {{- end -}}
 {{- end -}}

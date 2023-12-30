@@ -23,17 +23,17 @@ Access the pod you want to debug by executing
 
 Your Ollama WebUI instance can be accessed through the following DNS name from within your cluster:
 
-    {{ include "common.names.fullname" . }}-webui.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }} (port {{ .Values.webui.service.ports.http }})
+    {{ include "webui.name" . }}.{{ .Release.Namespace }}.svc.{{ .Values.clusterDomain }} (port {{ .Values.webui.service.ports.http }})
 
 To access your Ollama WebUI instance from outside the cluster follow the steps below:
 
-{{- if .Values.ingress.enabled }}
+{{- if .Values.webui.ingress.enabled }}
 
 1. Get the Ollama WebUI URL and associated Hostname to your cluster external IP:
 
    export CLUSTER_IP=$(minikube ip) # On Minikube. Use: `kubectl cluster-info` on others K8s clusters
-   echo "Ollama WebUI URL: http{{ if .Values.ingress.tls }}s{{ end }}://{{ .Values.ingress.hostname }}/"
-   echo "$CLUSTER_IP  {{ .Values.ingress.hostname }}" | sudo tee -a /etc/hosts
+   echo "Ollama WebUI URL: http{{ if .Values.webui.ingress.tls }}s{{ end }}://{{ .Values.webui.ingress.hostname }}/"
+   echo "$CLUSTER_IP  {{ .Values.webui.ingress.hostname }}" | sudo tee -a /etc/hosts
 
 {{- else }}
 {{- $port := .Values.webui.service.ports.http | toString }}
@@ -63,8 +63,6 @@ To access your Ollama WebUI instance from outside the cluster follow the steps b
 {{- end }}
 
 2. Open a browser and access Ollama WebUI using the obtained URL.
-
-3. If you enabled MongoDB (for Web Authentication), create a new account.
 
 To learn more about the Ollama WebUI:
 - Visit the GitHub repo [ https://github.com/ollama-webui/ollama-webui ].

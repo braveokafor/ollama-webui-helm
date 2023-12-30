@@ -1,0 +1,24 @@
+{{- $replicaCount := int .Values.ollama.replicaCount }}
+{{- if and .Values.ollama.pdb.create (or (gt $replicaCount 1) .Values.ollama.autoscaling.enabled) }}
+apiVersion: {{ include "common.capabilities.policy.apiVersion" . }}
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "ollama.name" . }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: ollama
+  {{- if .Values.commonAnnotations }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" .Values.commonAnnotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.ollama.pdb.minAvailable }}
+  minAvailable: {{ .Values.ollama.pdb.minAvailable }}
+  {{- end  }}
+  {{- if .Values.ollama.pdb.maxUnavailable }}
+  maxUnavailable: {{ .Values.ollama.pdb.maxUnavailable }}
+  {{- end  }}
+  {{- $podLabels := include "common.tplvalues.merge" (dict "values" (list .Values.ollama.podLabels .Values.commonLabels) "context" .) }}
+  selector:
+    matchLabels: {{- include "common.labels.matchLabels" ( dict "customLabels" $podLabels "context" $ ) | nindent 6 }}
+      app.kubernetes.io/component: ollama
+{{- end }}

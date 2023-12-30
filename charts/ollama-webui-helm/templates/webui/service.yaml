@@ -1,0 +1,49 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "webui.name" . }}
+  namespace: {{ include "common.names.namespace" . | quote }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: webui
+  {{- if or .Values.webui.service.annotations .Values.commonAnnotations }}
+  {{- $annotations := include "common.tplvalues.merge" (dict "values" (list .Values.webui.service.annotations .Values.commonAnnotations) "context" .) }}
+  annotations: {{- include "common.tplvalues.render" ( dict "value" $annotations "context" $ ) | nindent 4 }}
+  {{- end }}
+spec:
+  type: {{ .Values.webui.service.type }}
+  {{- if and .Values.webui.service.clusterIP (eq .Values.webui.service.type "ClusterIP") }}
+  clusterIP: {{ .Values.webui.service.clusterIP }}
+  {{- end }}
+  {{- if .Values.webui.service.sessionAffinity }}
+  sessionAffinity: {{ .Values.webui.service.sessionAffinity }}
+  {{- end }}
+  {{- if .Values.webui.service.sessionAffinityConfig }}
+  sessionAffinityConfig: {{- include "common.tplvalues.render" (dict "value" .Values.webui.service.sessionAffinityConfig "context" $) | nindent 4 }}
+  {{- end }}
+  {{- if or (eq .Values.webui.service.type "LoadBalancer") (eq .Values.webui.service.type "NodePort") }}
+  externalTrafficPolicy: {{ .Values.webui.service.externalTrafficPolicy | quote }}
+  {{- end }}
+  {{- if and (eq .Values.webui.service.type "LoadBalancer") (not (empty .Values.webui.service.loadBalancerSourceRanges)) }}
+  loadBalancerSourceRanges: {{ .Values.webui.service.loadBalancerSourceRanges }}
+  {{- end }}
+  {{- if and (eq .Values.webui.service.type "LoadBalancer") (not (empty .Values.webui.service.loadBalancerIP)) }}
+  loadBalancerIP: {{ .Values.webui.service.loadBalancerIP }}
+  {{- end }}
+  ports:
+    - name: http
+      port: {{ .Values.webui.service.ports.http }}
+      {{- if not (eq .Values.webui.service.ports.http .Values.webui.containerPorts.http) }}
+      targetPort: {{ .Values.webui.containerPorts.http }}
+      {{- end }}
+      protocol: TCP
+      {{- if and (or (eq .Values.webui.service.type "NodePort") (eq .Values.webui.service.type "LoadBalancer")) (not (empty .Values.webui.service.nodePorts.http)) }}
+      nodePort: {{ .Values.webui.service.nodePorts.http }}
+      {{- else if eq .Values.webui.service.type "ClusterIP" }}
+      nodePort: null
+      {{- end }}
+    {{- if .Values.webui.service.extraPorts }}
+    {{- include "common.tplvalues.render" (dict "value" .Values.webui.service.extraPorts "context" $) | nindent 4 }}
+    {{- end }}
+  {{- $podLabels := include "common.tplvalues.merge" (dict "values" (list .Values.webui.podLabels .Values.commonLabels) "context" .) | fromYaml }}
+  selector: {{- include "common.labels.matchLabels" ( dict "customLabels" $podLabels "context" $ ) | nindent 4 }}
+    app.kubernetes.io/component: webui
