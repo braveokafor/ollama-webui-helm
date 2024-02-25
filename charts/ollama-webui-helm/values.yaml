@@ -672,7 +672,7 @@ webui:
   image:
     registry: ghcr.io
     repository: open-webui/open-webui
-    tag: "git-4a47833" # v0.1.102
+    tag: "git-4a47833"  # v0.1.102
     digest: ""
     ## Specify an imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
