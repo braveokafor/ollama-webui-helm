@@ -1,6 +1,6 @@
 # ollama-webui
 
-![Version: 0.1.3](https://img.shields.io/badge/Version-0.1.3-informational?style=flat-square) ![AppVersion: 0.1.17](https://img.shields.io/badge/AppVersion-0.1.17-informational?style=flat-square)
+![Version: 0.1.4](https://img.shields.io/badge/Version-0.1.4-informational?style=flat-square) ![AppVersion: 0.1.102](https://img.shields.io/badge/AppVersion-0.1.102-informational?style=flat-square)
 
 Chart to deploy Open WebUI, a ChatGPT-Style Web UI Client for Ollama 🦙
 
@@ -314,14 +314,14 @@ The chart also facilitates the creation of TLS secrets for use with the Ingress 
 
 ### Webui Image parameters
 
-| Name                      | Description                                                                                                                                      | Value                       |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | --------------------------- |
-| `webui.image.registry`    | webui image registry                                                                                                                             | `ghcr.io`                   |
-| `webui.image.repository`  | webui image repository                                                                                                                           | `ollama-webui/ollama-webui` |
-| `webui.image.digest`      | webui image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag image tag (immutable tags are recommended) | `""`                        |
-| `webui.image.pullPolicy`  | webui image pull policy                                                                                                                          | `IfNotPresent`              |
-| `webui.image.pullSecrets` | webui image pull secrets                                                                                                                         | `[]`                        |
-| `webui.image.debug`       | Enable webui image debug mode                                                                                                                    | `false`                     |
+| Name                      | Description                                                                                                                                      | Value                   |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------- |
+| `webui.image.registry`    | webui image registry                                                                                                                             | `ghcr.io`               |
+| `webui.image.repository`  | webui image repository                                                                                                                           | `open-webui/open-webui` |
+| `webui.image.digest`      | webui image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag image tag (immutable tags are recommended) | `""`                    |
+| `webui.image.pullPolicy`  | webui image pull policy                                                                                                                          | `IfNotPresent`          |
+| `webui.image.pullSecrets` | webui image pull secrets                                                                                                                         | `[]`                    |
+| `webui.image.debug`       | Enable webui image debug mode                                                                                                                    | `false`                 |
 
 ### Webui Deployment parameters
 
