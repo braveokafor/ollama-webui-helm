@@ -2,9 +2,9 @@
 
 ![Version: 0.1.3](https://img.shields.io/badge/Version-0.1.3-informational?style=flat-square) ![AppVersion: 0.1.17](https://img.shields.io/badge/AppVersion-0.1.17-informational?style=flat-square)
 
-ChatGPT-Style Web UI Client for Ollama 🦙
+Chart to deploy Open WebUI, a ChatGPT-Style Web UI Client for Ollama 🦙
 
-![Ollama Web UI Demo](https://github.com/ollama-webui/ollama-webui/blob/main/demo.gif?raw=true)
+![Open WebUI Demo](https://github.com/ollama-webui/ollama-webui/blob/main/demo.gif?raw=true)
 
 ## TL;DR
 
@@ -22,7 +22,7 @@ helm install ollama braveokafor/ollama-webui
 
 ## Introduction
 
-Deploy [Ollama WebUI](https://github.com/ollama-webui/ollama-webui) on Kubernetes easily with this Helm chart. 
+Deploy [Open WebUI](https://github.com/ollama-webui/ollama-webui) on Kubernetes easily with this Helm chart. 
 
 It enables you to run a ChatGPT-style web UI client, with a variety of open-source large language models available at [ollama.ai/library](ollama.ai/library). 
 
@@ -34,8 +34,8 @@ It enables you to run a ChatGPT-style web UI client, with a variety of open-sour
 
 ## Source Code
 
-* <https://github.com/jmorganca/ollama>
-* <https://github.com/ollama-webui/ollama-webui>
+* <https://github.com/jmorganca/ollama/>
+* <https://github.com/open-webui/open-webui/>
 * <https://github.com/braveokafor/ollama-webui-helm/>
 
 ## Requirements
@@ -49,10 +49,10 @@ It enables you to run a ChatGPT-style web UI client, with a variety of open-sour
 To install the chart with the release name `ollama`:
 
 ```sh
-helm install ollama ollama-webui/ollama-webui
+helm install ollama braveokafor/ollama-webui
 ```
 
-The command deploys Ollama WebUI on the Kubernetes cluster in the default configuration. 
+The command deploys Open WebUI on the Kubernetes cluster in the default configuration. 
 
 The [Parameters](#parameters) section lists the parameters that can be configured during installation.
 
@@ -93,29 +93,19 @@ Example fully configured `values.yaml`:
 # values.yaml
 
 webui:
-  nodeSelector:
-    cloud.google.com/gke-spot: "true"
   ingress:
     enabled: true
     pathType: Prefix
     hostname: ollama.braveokafor.com
-    annotations:
-      kubernetes.io/ingress.global-static-ip-name: ollama-ui
-      kubernetes.io/ingress.class: gce
 
 ollama:
   gpu:
     enabled: "true"
     num: 1
-  pdb:
-    create: "false"
-  autoscaling:
-    enabled: false
   persistence:
     accessModes:
       - ReadWriteOnce
   nodeSelector:
-    cloud.google.com/gke-spot: "true"
     cloud.google.com/gke-accelerator: "nvidia-tesla-t4"
   resources:
     requests:
@@ -125,16 +115,12 @@ ollama:
     - key: nvidia.com/gpu
       operator: Exists
       effect: NoSchedule
-  ingress:
-    enabled: false
-  service:
-    type: LoadBalancer
 ```
 
 ### Ingress
 
 This chart provides support for Ingress resources. 
-If an Ingress controller, such as [nginx-ingress](https://kubeapps.com/charts/stable/nginx-ingress) or [traefik](https://kubeapps.com/charts/stable/traefik) is installed on the cluster, that Ingress controller can be used to serve Ollama WebUI.
+If an Ingress controller, such as [nginx-ingress](https://kubeapps.com/charts/stable/nginx-ingress) or [traefik](https://kubeapps.com/charts/stable/traefik) is installed on the cluster, that Ingress controller can be used to serve Open WebUI.
 
 To enable Ingress integration, set `webui.ingress.enabled` to `true`. 
 The `webui.ingress.hostname` property can be used to set the host name. 
