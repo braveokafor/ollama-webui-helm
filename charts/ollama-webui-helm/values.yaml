@@ -89,7 +89,7 @@ ollama:
   image:
     registry: docker.io
     repository: ollama/ollama
-    tag: latest
+    tag: "0.1.27"
     digest: ""
     ## Specify an imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'
@@ -542,7 +542,6 @@ ollama:
     ##
     automountServiceAccountToken: true
 
-
   ## @section Ollama Ingress Parameters
   ##
 
@@ -661,9 +660,9 @@ webui:
   ##
 
   ## Webui image
-  ## ref: https://github.com/ollama-webui/ollama-webui/pkgs/container/ollama-webui/versions
+  ## ref: https://github.com/open-webui/open-webui/pkgs/container/open-webui/versions
   ## @param webui.image.registry [default: ghcr.io] webui image registry
-  ## @param webui.image.repository [default: ollama-webui/ollama-webui] webui image repository
+  ## @param webui.image.repository [default: open-webui/open-webui] webui image repository
   ## @skip webui.image.tag webui image tag (immutable tags are recommended)
   ## @param webui.image.digest webui image digest in the way sha256:aa.... Please note this parameter, if set, will override the tag image tag (immutable tags are recommended)
   ## @param webui.image.pullPolicy webui image pull policy
@@ -672,8 +671,8 @@ webui:
   ##
   image:
     registry: ghcr.io
-    repository: ollama-webui/ollama-webui
-    tag: main
+    repository: open-webui/open-webui
+    tag: "git-4a47833"  # v0.1.102
     digest: ""
     ## Specify an imagePullPolicy
     ## Defaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'

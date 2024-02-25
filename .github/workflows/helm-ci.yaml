@@ -105,9 +105,9 @@ jobs:
       matrix:
         k8s:
           # from https://github.com/yannh/kubernetes-json-schema
-          - v1.26.9
           - v1.27.6
           - v1.28.3
+          - v1.29.2
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -149,9 +149,9 @@ jobs:
       matrix:
         k8s:
           # from https://hub.docker.com/r/kindest/node/tags
-          - v1.26.6 # renovate: kindest
           - v1.27.3 # renovate: kindest
           - v1.28.0 # renovate: kindest
+          - v1.29.2 # renovate: kindest
     steps:
       - name: Checkout
         uses: actions/checkout@v3
